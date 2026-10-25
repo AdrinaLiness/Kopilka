@@ -2284,12 +2284,12 @@ function renderVault() {
     document.getElementById('vaultList').innerHTML = saves.length === 0
       ? '<div class="muted" style="margin:6px 0">Пока пусто. Сделай первое сохранение 👆</div>'
       : saves.map(sv =>
-          '<div class="stat"><span>🗃 ' + new Date(sv.ts).toLocaleString() + '</span>' +
-          '<span style="white-space:nowrap">' +
-          '<button class="ghost" style="padding:2px 8px" onclick="vaultRestore(' + sv.id + ')" title="Восстановить">♻️</button>' +
-          '<button class="ghost" style="padding:2px 8px" onclick="vaultDownload(' + sv.id + ')" title="Скачать шифрованный файл">📤</button>' +
-          '<button class="ghost" style="padding:2px 8px" onclick="vaultPush(' + sv.id + ')" title="Загрузить на GitHub">☁️</button>' +
-          '<button class="ghost" style="padding:2px 8px" onclick="vaultDelete(' + sv.id + ')" title="Удалить">🗑</button></span></div>').join('');
+          '<div class="stat" style="flex-wrap:wrap;row-gap:4px"><span>🗃 ' + new Date(sv.ts).toLocaleString() + '</span>' +
+          '<span style="display:flex;gap:4px;align-items:center;white-space:nowrap;flex-shrink:0">' +
+          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultRestore(' + sv.id + ')" title="Восстановить">♻️</button>' +
+          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultDownload(' + sv.id + ')" title="Скачать шифрованный файл">📤</button>' +
+          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultPush(' + sv.id + ')" title="Загрузить на GitHub">☁️</button>' +
+          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultDelete(' + sv.id + ')" title="Удалить">🗑</button></span></div>').join('');
     vaultShow('open');
     vaultRenderCloud();
     return;
@@ -2577,11 +2577,11 @@ async function vaultRenderCloud(force) {
     list.innerHTML = files.length === 0
       ? '<div class="muted" style="margin:4px 0">Пока пусто — нажми «☁️ Копия в GitHub».</div>'
       : files.map(f =>
-          '<div class="stat"><span style="min-width:0;word-break:break-all">📄 ' + escapeHtml(f.name) + ' <span class="muted">· ' + ghSize(f.size) + '</span></span>' +
-          '<span style="white-space:nowrap;flex-shrink:0">' +
-          '<button class="ghost" style="padding:2px 8px" onclick="vaultCloudRestore(\'' + f.name + '\')" title="Восстановить из облака">♻️</button>' +
-          '<button class="ghost" style="padding:2px 8px" onclick="vaultCloudDownload(\'' + f.name + '\')" title="Скачать с GitHub">📤</button>' +
-          '<button class="ghost" style="padding:2px 8px" onclick="vaultCloudDelete(\'' + f.name + '\',\'' + f.sha + '\')" title="Удалить с GitHub">🗑</button></span></div>').join('');
+          '<div class="stat" style="flex-wrap:wrap;row-gap:4px"><span style="min-width:0;word-break:break-all">📄 ' + escapeHtml(f.name) + ' <span class="muted">· ' + ghSize(f.size) + '</span></span>' +
+          '<span style="display:flex;gap:4px;align-items:center;white-space:nowrap;flex-shrink:0">' +
+          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultCloudRestore(\'' + f.name + '\')" title="Восстановить из облака">♻️</button>' +
+          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultCloudDownload(\'' + f.name + '\')" title="Скачать с GitHub">📤</button>' +
+          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultCloudDelete(\'' + f.name + '\',\'' + f.sha + '\')" title="Удалить с GitHub">🗑</button></span></div>').join('');
     ghLoadedOnce = true;
   } catch (err) {
     ghLoadedOnce = false;
