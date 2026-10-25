@@ -94,7 +94,12 @@
   .page.active { display: block; }
 
   /* КУРИЦА */
-  .chicken-visual { text-align: center; font-size: 64px; margin: 8px 0; line-height: 1; }
+  .chicken-visual { text-align: center; font-size: 64px; margin: 8px 0; line-height: 1; cursor: pointer; user-select: none; transition: transform 0.15s; }
+  .mini-btn { width: auto; min-width: 0; margin: 0; padding: 3px 12px; font-size: 14px; flex: 0 0 auto; }
+  .file-row { padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .file-row:last-child { border-bottom: none; }
+  .file-name { word-break: break-all; font-size: 14px; margin-bottom: 4px; }
+  .file-btns { display: flex; gap: 6px; flex-wrap: wrap; }
   .chicken-visual.happy { animation: bounce 1.5s infinite; }
   @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
   .chicken-visual.sad { filter: grayscale(0.6); }
@@ -311,29 +316,24 @@
   </div>
 
   <div class="card">
-    <h3>💾 Резервная копия</h3>
-    <div class="row">
-      <button class="secondary" onclick="exportData()">Скачать JSON</button>
-      <button class="secondary" onclick="document.getElementById('importFile').click()">Загрузить JSON</button>
-    </div>
-    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-    <button class="secondary" onclick="vaultBtn()">🔐 Секретная папка</button>
+    <h3>💾 Резервные копии</h3>
+    <button class="secondary" onclick="vaultBtn()">🔐 Зашифрованная резервная копия</button>
     <button class="danger" onclick="resetAll()">Удалить все данные</button>
-    <div class="muted" style="margin-top:8px">Данные хранятся в браузере. Раз в неделю делай резервную копию!</div>
+    <div class="muted" style="margin-top:8px">Данные хранятся в браузере. Делай копии только через 🔐 зашифрованное хранилище — они защищены кодом, и их не прочитать без него.</div>
   </div>
 
   <div class="card" id="vaultCard" style="display:none">
-    <h3>🔐 Секретная папка</h3>
+    <h3>🔐 Зашифрованная резервная копия</h3>
     <div id="vaultSetup" style="display:none">
-      <div class="muted" style="margin-bottom:8px">Придумай код из 4 цифр — им зашифруются сохранения. Код нигде не хранится: без него копии не прочитать. Запиши код в надёжном месте!</div>
+      <div class="muted" style="margin-bottom:8px">Придумай код из 4 цифр — им зашифруются копии. Код нигде не хранится: без него копии не прочитать. Запиши код в надёжном месте!</div>
       <input type="password" id="vaultPin1" inputmode="numeric" maxlength="4" placeholder="Код (4 цифры)" style="width:100%;margin-bottom:6px">
       <input type="password" id="vaultPin2" inputmode="numeric" maxlength="4" placeholder="Повтори код" style="width:100%;margin-bottom:8px">
-      <button onclick="vaultCreate()">🔐 Создать папку</button>
+      <button onclick="vaultCreate()">🔐 Создать хранилище</button>
     </div>
     <div id="vaultLocked" style="display:none">
-      <div class="muted" id="vaultLockedInfo" style="margin-bottom:8px">В папке сохранений: 0</div>
+      <div class="muted" id="vaultLockedInfo" style="margin-bottom:8px">Зашифрованных копий: 0</div>
       <input type="password" id="vaultPin" inputmode="numeric" maxlength="4" placeholder="Код из 4 цифр" style="width:100%;margin-bottom:8px">
-      <button onclick="vaultUnlock()">🔓 Открыть папку</button>
+      <button onclick="vaultUnlock()">🔓 Открыть</button>
     </div>
     <div id="vaultOpen" style="display:none">
       <div class="muted" style="margin-bottom:8px">Открыто. Сохранения зашифрованы кодом — скачанный файл без кода не прочитать.</div>
@@ -363,7 +363,7 @@
       <div class="row" style="margin-top:8px">
         <button class="ghost" onclick="vaultLock()">🔒 Закрыть</button>
         <button class="ghost" onclick="vaultChangePin()">🔁 Сменить код</button>
-        <button class="ghost" onclick="vaultRemove()">❌ Удалить папку</button>
+        <button class="ghost" onclick="vaultRemove()">❌ Удалить хранилище</button>
       </div>
     </div>
   </div>
@@ -478,13 +478,6 @@
     <div class="muted" style="margin-top:6px">Лайфхак: цена цели в часах работы — умножь часы на свою ставку. Если жалко часов — не жалко и денег потратить.</div>
   </div>
 
-  <div class="card">
-    <h3>💾 Резервная копия</h3>
-    <div class="row">
-      <button class="secondary" onclick="exportAll()">Скачать всё (JSON)</button>
-    </div>
-  </div>
-
 </div><!-- /page-piggy -->
 
 <!-- ============ ЛИСТ 2: КОРМ ============ -->
@@ -492,7 +485,7 @@
 
   <div class="card">
     <h3>🐔 Статус курицы</h3>
-    <div class="chicken-visual" id="chickenEmoji">🐔</div>
+    <div class="chicken-visual" id="chickenEmoji" onclick="pokeChicken()" title="Тык! 🐔">🐔</div>
     <div class="feed-status" id="feedStatus">—</div>
     <div class="progress-bar">
       <div class="progress-fill" id="feedProgressFill"></div>
@@ -529,10 +522,46 @@
     <div class="stat"><span>Максимум жизни курицы:</span><b>~140 дн. (20 нед.)</b></div>
   </div>
 
-  <div class="card">
-    <h3>💾 Резервная копия</h3>
-    <div class="row">
-      <button class="secondary" onclick="exportAll()">Скачать всё (JSON)</button>
+  <!-- 🗂 СЕКРЕТНАЯ ПАПКА (файлы) — вход по ключу шифрования -->
+  <div class="card" style="border:1px dashed var(--input-border)">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <h3 style="margin:0">🗂 Секретная папка</h3>
+      <button class="ghost mini-btn" onclick="fvToggle()" title="Открыть Секретную папку">🔐</button>
+    </div>
+    <div id="fvGate" style="display:none;margin-top:8px">
+      <div class="muted" style="margin-bottom:6px">Чтобы попасть в Секретную папку, введи ключ шифрования. Он показывается в секретном меню: тапни по курице 🐔 4 раза — меню появится внизу вкладки «Накрутка».</div>
+      <input type="password" id="fvKeyInput" placeholder="Ключ шифрования" style="width:100%;margin-bottom:8px" autocomplete="off">
+      <button onclick="fvUnlock()">🔓 Открыть папку</button>
+    </div>
+    <div id="fvPanel" style="display:none;margin-top:8px">
+      <div class="muted" style="margin-bottom:8px">Здесь лежат <b>любые файлы</b>: txt, word, фото, видео и т.д. Каждый файл шифруется твоим ключом перед загрузкой — на GitHub он попадает уже зашифрованным. Один файл — до 25 МБ.</div>
+      <div id="fvSetup" style="display:none">
+        <div class="muted" style="margin-bottom:6px">Файлы будут загружаться в <b>закрытый</b> репозиторий GitHub. Заведи для них новый (как Kopilka-backup, только Private): в токене должно быть право доступа и к этому репозиторию — «Contents: Read and write».</div>
+        <input type="text" id="fvUser" placeholder="Логин GitHub (напр. Kira0784)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="fvRepo" placeholder="Имя закрытого репозитория (напр. Kopilka-files)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="fvBranch" placeholder="Ветка (обычно main)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="fvDir" placeholder="Папка в репозитории (напр. secret-files)" style="width:100%;margin-bottom:6px">
+        <input type="password" id="fvToken" placeholder="Токен (github_pat_… или ghp_…)" style="width:100%;margin-bottom:8px">
+        <div class="row">
+          <button onclick="fvSaveSetup()">💾 Сохранить и проверить</button>
+          <button class="ghost" onclick="fvCloseSetup()">Отмена</button>
+        </div>
+        <div class="muted" id="fvSetupMsg" style="margin-top:6px"></div>
+      </div>
+      <div id="fvMain" style="display:none">
+        <div class="muted fv-status" style="margin:0 0 6px"></div>
+        <input type="file" id="fvFileInput" multiple style="display:none" onchange="fvUpload(event)">
+        <div class="row" style="margin-bottom:6px">
+          <button onclick="document.getElementById('fvFileInput').click()">➕ Добавить файлы</button>
+        </div>
+        <div class="row">
+          <button class="ghost" onclick="fvRefresh()">🔄 Обновить</button>
+          <button class="ghost" onclick="fvOpenSetup()">⚙️ Настройки</button>
+          <button class="ghost" onclick="fvDisconnect()">✖ Отключить</button>
+        </div>
+        <div class="muted" id="fvProgress" style="margin:6px 0"></div>
+        <div id="fvList" style="margin-top:4px"></div>
+      </div>
     </div>
   </div>
 
@@ -585,13 +614,6 @@
     </table>
   </div>
 
-  <div class="card">
-    <h3>💾 Резервная копия</h3>
-    <div class="row">
-      <button class="secondary" onclick="exportAll()">Скачать всё (JSON)</button>
-    </div>
-  </div>
-
 </div><!-- /page-drops -->
 
 <!-- ============ ЛИСТ 4: НАКРУТКА ЧАСОВ ============ -->
@@ -626,11 +648,19 @@
 
   <div id="gamesList"></div>
 
-  <div class="card">
-    <h3>💾 Резервная копия</h3>
+  <!-- 🗝 Секретное меню — открывается 4 тапами по курице -->
+  <div class="card" id="secretMenuCard" style="display:none">
+    <h3>🗝 Секретное меню</h3>
+    <div class="muted" style="margin-bottom:8px">Это ключ шифрования для <b>Секретной папки</b> (вкладка «Корм» — кнопка 🔐). Введи его там, чтобы открыть папку. <b>Запиши ключ в надёжное место</b> — без него зашифрованные файлы не прочитать!</div>
+    <div id="secretKeyBox" style="font-family:monospace;font-size:16px;font-weight:700;letter-spacing:1px;text-align:center;padding:10px;background:var(--table-head);border-radius:8px;margin-bottom:8px;word-break:break-all">••••-••••-••••-••••-••••</div>
     <div class="row">
-      <button class="secondary" onclick="exportAll()">Скачать всё (JSON)</button>
+      <button class="secondary" id="secretKeyToggleBtn" onclick="secretKeyToggle()">👁 Показать</button>
+      <button class="secondary" onclick="secretKeyCopy()">📋 Скопировать</button>
     </div>
+    <div class="row" style="margin-top:6px">
+      <button class="ghost" onclick="secretKeyCustom()">✏️ Ввести свой ключ</button>
+    </div>
+    <div class="muted" style="margin-top:8px">Это меню открывается 4 тапами по курице 🐔 во вкладке «Корм».</div>
   </div>
 
 </div><!-- /page-hours -->
@@ -2284,12 +2314,12 @@ function renderVault() {
     document.getElementById('vaultList').innerHTML = saves.length === 0
       ? '<div class="muted" style="margin:6px 0">Пока пусто. Сделай первое сохранение 👆</div>'
       : saves.map(sv =>
-          '<div class="stat" style="flex-wrap:wrap;row-gap:4px"><span>🗃 ' + new Date(sv.ts).toLocaleString() + '</span>' +
-          '<span style="display:flex;gap:4px;align-items:center;white-space:nowrap;flex-shrink:0">' +
-          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultRestore(' + sv.id + ')" title="Восстановить">♻️</button>' +
-          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultDownload(' + sv.id + ')" title="Скачать шифрованный файл">📤</button>' +
-          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultPush(' + sv.id + ')" title="Загрузить на GitHub">☁️</button>' +
-          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultDelete(' + sv.id + ')" title="Удалить">🗑</button></span></div>').join('');
+          '<div class="file-row"><div class="file-name">🗃 ' + new Date(sv.ts).toLocaleString() + '</div>' +
+          '<div class="file-btns">' +
+          '<button class="ghost mini-btn" onclick="vaultRestore(' + sv.id + ')" title="Восстановить">♻️</button>' +
+          '<button class="ghost mini-btn" onclick="vaultDownload(' + sv.id + ')" title="Скачать шифрованный файл">📤</button>' +
+          '<button class="ghost mini-btn" onclick="vaultPush(' + sv.id + ')" title="Загрузить на GitHub">☁️</button>' +
+          '<button class="ghost mini-btn" onclick="vaultDelete(' + sv.id + ')" title="Удалить">🗑</button></div></div>').join('');
     vaultShow('open');
     vaultRenderCloud();
     return;
@@ -2299,7 +2329,7 @@ function renderVault() {
     document.getElementById('vaultPin2').value = '';
     vaultShow('setup');
   } else {
-    document.getElementById('vaultLockedInfo').textContent = 'В папке сохранений: ' + (store.saves ? store.saves.length : 0) + '. Введи код, чтобы открыть.';
+    document.getElementById('vaultLockedInfo').textContent = 'Зашифрованных копий: ' + (store.saves ? store.saves.length : 0) + '. Введи код, чтобы открыть.';
     document.getElementById('vaultPin').value = '';
     vaultShow('locked');
   }
@@ -2315,7 +2345,7 @@ async function vaultCreate() {
   vaultSaveData({ v: 1, salt: salt, probe: probe, saves: [] });
   vaultKeyObj = key; vaultPinCache = p1;
   renderVault();
-  showToast('🔐 Секретная папка создана');
+  showToast('🔐 Зашифрованная резервная копия создана');
 }
 async function vaultUnlock() {
   const store = vaultLoad();
@@ -2326,7 +2356,7 @@ async function vaultUnlock() {
     await vaultDec(key, store.probe); // неверный код → исключение
     vaultKeyObj = key; vaultPinCache = pin;
     renderVault();
-    showToast('🔓 Папка открыта');
+    showToast('🔓 Хранилище открыто');
   } catch (err) {
     alert('Неверный код');
   }
@@ -2340,7 +2370,7 @@ async function vaultSnapshot() {
   store.saves.unshift({ id: Date.now(), ts: Date.now(), blob: blob });
   vaultSaveData(store);
   renderVault();
-  showToast('💾 Сохранение в секретной папке');
+  showToast('💾 Копия сохранена в зашифрованном хранилище');
 }
 function vaultApplyData(data) {
   if (data.entries) entries = data.entries;
@@ -2365,7 +2395,7 @@ async function vaultRestore(id) {
   try {
     const data = await vaultDec(vaultKeyObj, sv.blob);
     vaultApplyData(data);
-    showToast('♻️ Данные восстановлены из секретной папки');
+    showToast('♻️ Данные восстановлены из зашифрованной копии');
   } catch (err) {
     alert('Не удалось расшифровать сохранение');
   }
@@ -2407,7 +2437,7 @@ async function vaultImport(ev) {
       store.saves.unshift({ id: Date.now(), ts: parsed.ts ? (Date.parse(parsed.ts) || Date.now()) : Date.now(), blob: blob });
       vaultSaveData(store);
       renderVault();
-      showToast('📥 Сохранение спрятано в папку');
+      showToast('📥 Копия добавлена в хранилище');
     } catch (err) {
       alert('Не удалось прочитать файл (другой код или файл повреждён)');
     }
@@ -2415,7 +2445,7 @@ async function vaultImport(ev) {
   reader.readAsText(file);
 }
 async function vaultDelete(id) {
-  if (!confirm('Удалить это сохранение из папки?')) return;
+  if (!confirm('Удалить эту копию из хранилища?')) return;
   const store = vaultLoad();
   store.saves = (store.saves || []).filter(s => s.id !== id);
   vaultSaveData(store);
@@ -2442,11 +2472,11 @@ async function vaultChangePin() {
   showToast('🔁 Код изменён — все копии перешфрованы');
 }
 function vaultRemove() {
-  if (!confirm('Удалить секретную папку СО ВСЕМИ сохранениями? Это необратимо.')) return;
+  if (!confirm('Удалить хранилище СО ВСЕМИ зашифрованными копиями? Это необратимо.')) return;
   if (!confirm('Точно? Копии нельзя будет вернуть.')) return;
   localStorage.removeItem(VAULT_KEY);
   vaultLock();
-  showToast('❌ Секретная папка удалена');
+  showToast('❌ Хранилище удалено');
 }
 
 // ============ ОБЛАКО GITHUB (закрытый репозиторий) ============
@@ -2577,11 +2607,11 @@ async function vaultRenderCloud(force) {
     list.innerHTML = files.length === 0
       ? '<div class="muted" style="margin:4px 0">Пока пусто — нажми «☁️ Копия в GitHub».</div>'
       : files.map(f =>
-          '<div class="stat" style="flex-wrap:wrap;row-gap:4px"><span style="min-width:0;word-break:break-all">📄 ' + escapeHtml(f.name) + ' <span class="muted">· ' + ghSize(f.size) + '</span></span>' +
-          '<span style="display:flex;gap:4px;align-items:center;white-space:nowrap;flex-shrink:0">' +
-          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultCloudRestore(\'' + f.name + '\')" title="Восстановить из облака">♻️</button>' +
-          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultCloudDownload(\'' + f.name + '\')" title="Скачать с GitHub">📤</button>' +
-          '<button class="ghost" style="width:auto;min-width:0;margin:0;padding:2px 8px" onclick="vaultCloudDelete(\'' + f.name + '\',\'' + f.sha + '\')" title="Удалить с GitHub">🗑</button></span></div>').join('');
+          '<div class="file-row"><div class="file-name">📄 ' + escapeHtml(f.name) + ' <span class="muted">· ' + ghSize(f.size) + '</span></div>' +
+          '<div class="file-btns">' +
+          '<button class="ghost mini-btn" onclick="vaultCloudRestore(\'' + f.name + '\')" title="Восстановить из облака">♻️</button>' +
+          '<button class="ghost mini-btn" onclick="vaultCloudDownload(\'' + f.name + '\')" title="Скачать с GitHub">📤</button>' +
+          '<button class="ghost mini-btn" onclick="vaultCloudDelete(\'' + f.name + '\',\'' + f.sha + '\')" title="Удалить с GitHub">🗑</button></div></div>').join('');
     ghLoadedOnce = true;
   } catch (err) {
     ghLoadedOnce = false;
@@ -2677,6 +2707,325 @@ async function vaultCloudDelete(name, sha) {
   } catch (err) {
     alert('Не удалось удалить: ' + err.message);
   }
+}
+
+// ============ СЕКРЕТНОЕ МЕНЮ (4 тапа по курице) и КЛЮЧ ШИФРОВАНИЯ ============
+const FILEKEY_STORE = 'kopilka_filekey_v1';
+let chickenTaps = 0, chickenTapTimer = null, secretKeyShown = false;
+function fileKeyGet() { return localStorage.getItem(FILEKEY_STORE) || ''; }
+function fileKeySet(k) { localStorage.setItem(FILEKEY_STORE, k); }
+function fileKeyGenerate() {
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // без похожих O, 0, 1, I
+  const arr = crypto.getRandomValues(new Uint8Array(20));
+  let s = '';
+  for (let i = 0; i < 20; i++) s += abc[arr[i] % abc.length];
+  return s.slice(0, 4) + '-' + s.slice(4, 8) + '-' + s.slice(8, 12) + '-' + s.slice(12, 16) + '-' + s.slice(16, 20);
+}
+function pokeChicken() {
+  const el = document.getElementById('chickenEmoji');
+  el.style.transform = 'scale(1.25) rotate(8deg)';
+  setTimeout(() => { el.style.transform = ''; }, 200);
+  chickenTaps++;
+  clearTimeout(chickenTapTimer);
+  chickenTapTimer = setTimeout(() => { chickenTaps = 0; }, 2500);
+  if (chickenTaps >= 4) {
+    chickenTaps = 0;
+    secretMenuReveal();
+  }
+}
+function secretMenuReveal() {
+  const card = document.getElementById('secretMenuCard');
+  if (!card) return;
+  if (card.style.display === 'block') {
+    card.style.display = 'none';
+    showToast('🗝 Секретное меню скрыто');
+    return;
+  }
+  card.style.display = 'block';
+  if (!fileKeyGet()) fileKeySet(fileKeyGenerate());
+  secretMenuRender();
+  switchTab('hours');
+  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
+  showToast('🗝 Секретное меню открыто');
+}
+function secretMenuRender() {
+  const k = fileKeyGet();
+  const box = document.getElementById('secretKeyBox');
+  box.textContent = secretKeyShown ? k : '••••-••••-••••-••••-••••';
+  document.getElementById('secretKeyToggleBtn').textContent = secretKeyShown ? '🙈 Скрыть' : '👁 Показать';
+}
+function secretKeyToggle() { secretKeyShown = !secretKeyShown; secretMenuRender(); }
+async function secretKeyCopy() {
+  const k = fileKeyGet();
+  try {
+    await navigator.clipboard.writeText(k);
+    showToast('📋 Ключ скопирован');
+  } catch (err) {
+    prompt('Скопируй ключ вручную (удерживай, чтобы выделить):', k);
+  }
+}
+function secretKeyCustom() {
+  const cur = fileKeyGet();
+  const k = prompt('Введи свой ключ шифрования (минимум 8 символов).\n\nВНИМАНИЕ: если в Секретной папке уже есть файлы, а ты поменяешь ключ — старые файлы не расшифровать!\n\nЗапиши новый ключ в надёжное место.', cur);
+  if (k === null) return;
+  const t = k.trim();
+  if (t.length < 8) return alert('Ключ слишком короткий — минимум 8 символов');
+  fileKeySet(t);
+  secretMenuRender();
+  fvSyncMeta();
+  showToast('🗝 Ключ обновлён — запиши его!');
+}
+
+// ============ СЕКРЕТНАЯ ПАПКА (любые файлы в GitHub, шифрованные) ============
+const FV_STORE = 'income_tracker_fv_v1';
+let fvUnlocked = false, fvBusy = false, fvListCache = null;
+function fvCfg() { try { return JSON.parse(localStorage.getItem(FV_STORE) || 'null'); } catch (err) { return null; } }
+function fvConnected() { const c = fvCfg(); return !!(c && c.user && c.repo && c.token); }
+function fvBase() {
+  const c = fvCfg();
+  return 'https://api.github.com/repos/' + c.user + '/' + c.repo + '/contents' + (c.dir ? '/' + c.dir.replace(/^\/+|\/+$/g, '') : '');
+}
+async function fvReq(url, method, body, raw) {
+  const c = fvCfg();
+  const headers = { 'Accept': raw ? 'application/vnd.github.raw' : 'application/vnd.github+json', 'Authorization': 'Bearer ' + c.token, 'X-GitHub-Api-Version': '2022-11-28' };
+  const res = await fetch(url, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined });
+  if (raw) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.arrayBuffer();
+  }
+  let j = null;
+  try { j = await res.json(); } catch (err) { j = null; }
+  if (!res.ok) {
+    const rawMsg = (j && j.message) || ('HTTP ' + res.status);
+    let msg = rawMsg;
+    if (res.status === 401) msg = 'токен неверный или устарел (401)';
+    else if (res.status === 404) msg = 'репозиторий/папка не найдены (404) — проверь имя репозитория и доступ токена к нему';
+    else if (res.status === 403 && /rate limit/i.test(rawMsg)) msg = 'лимит запросов GitHub, попробуй позже';
+    throw new Error(msg);
+  }
+  return j;
+}
+async function fvKeyHash(k) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('kopilka-filekey:' + k));
+  return vaultB64(new Uint8Array(d)).replace(/=+$/, '');
+}
+async function fvSyncMeta() {
+  if (!fvConnected() || !fileKeyGet()) return;
+  try {
+    const c = fvCfg();
+    const check = await fvKeyHash(fileKeyGet());
+    const metaBody = { message: 'Kopilka: meta', content: ghB64(JSON.stringify({ v: 1, check: check })), branch: c.branch || 'main' };
+    const ex = await (async () => { try { const j = await fvReq(fvBase() + '/' + encodeURIComponent('_meta.json') + '?ref=' + encodeURIComponent(c.branch || 'main'), 'GET'); return j && j.sha; } catch (e) { return null; } })();
+    if (ex) metaBody.sha = ex;
+    await fvReq(fvBase() + '/' + encodeURIComponent('_meta.json'), 'PUT', metaBody);
+  } catch (err) { /* не критично */ }
+}
+function fvToggle() {
+  const gate = document.getElementById('fvGate'), panel = document.getElementById('fvPanel');
+  if (fvUnlocked) {
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  } else {
+    gate.style.display = gate.style.display === 'none' ? 'block' : 'none';
+    if (gate.style.display === 'block') document.getElementById('fvKeyInput').focus();
+  }
+}
+async function fvUnlock() {
+  const k = document.getElementById('fvKeyInput').value.trim();
+  if (!k) return alert('Введи ключ шифрования');
+  const stored = fileKeyGet();
+  if (stored && k !== stored) return alert('Неверный ключ');
+  if (!stored) {
+    // на этом устройстве ключ ещё не сохранён — сверяем с меткой в репозитории, если он подключён
+    const c = fvCfg();
+    if (c && c.user && c.repo && c.token) {
+      try {
+        const j = await fvReq(fvBase() + '/' + encodeURIComponent('_meta.json') + '?ref=' + encodeURIComponent(c.branch || 'main'), 'GET');
+        const meta = JSON.parse(ghUnb64(j.content));
+        if (meta && meta.check && meta.check !== await fvKeyHash(k)) return alert('Неверный ключ');
+      } catch (err) { /* нет метки — примем ключ как новый */ }
+    }
+    fileKeySet(k);
+    fvSyncMeta();
+  }
+  fvUnlocked = true;
+  document.getElementById('fvKeyInput').value = '';
+  document.getElementById('fvGate').style.display = 'none';
+  document.getElementById('fvPanel').style.display = 'block';
+  await fvRender();
+}
+function fvLock() {
+  fvUnlocked = false;
+  document.getElementById('fvPanel').style.display = 'none';
+  showToast('🔒 Секретная папка закрыта');
+}
+function fvRefresh() { if (fvUnlocked) fvRender(); }
+function fvIcon(name) {
+  const n = name.toLowerCase();
+  if (/\.(png|jpe?g|gif|webp|bmp|heic|svg)$/.test(n)) return '🖼';
+  if (/\.(mp4|mov|avi|mkv|webm|3gp)$/.test(n)) return '🎬';
+  if (/\.(mp3|wav|ogg|m4a|flac)$/.test(n)) return '🎵';
+  if (/\.(docx?|rtf|odt|pages)$/.test(n)) return '📝';
+  if (/\.(xlsx?|csv|ods)$/.test(n)) return '📊';
+  if (/\.(pdf)$/.test(n)) return '📕';
+  if (/\.(zip|rar|7z|tar|gz)$/.test(n)) return '📦';
+  if (/\.(exe|apk|dmg|msi)$/.test(n)) return '⚙️';
+  return '📄';
+}
+async function fvListFiles() {
+  const c = fvCfg();
+  try {
+    const j = await fvReq(fvBase() + '?ref=' + encodeURIComponent(c.branch || 'main'), 'GET');
+    if (!Array.isArray(j)) throw new Error('папка недоступна');
+    fvListCache = j.filter(f => f.type === 'file' && !f.name.startsWith('_'));
+  } catch (err) {
+    if (/404/.test(err.message)) { fvListCache = []; } else { throw err; }
+  }
+  return fvListCache;
+}
+async function fvRender() {
+  const main = document.getElementById('fvMain'), setup = document.getElementById('fvSetup');
+  if (!fvConnected()) { setup.style.display = 'block'; main.style.display = 'none'; return; }
+  setup.style.display = 'none'; main.style.display = 'block';
+  const c = fvCfg();
+  const status = main.querySelector('.fv-status');
+  status.textContent = '🗂 GitHub: ' + c.user + '/' + c.repo + (c.dir ? '/' + c.dir : '') + ' — загружаю…';
+  document.getElementById('fvList').innerHTML = '';
+  try {
+    const files = await fvListFiles();
+    status.textContent = '🗂 GitHub: ' + c.user + '/' + c.repo + (c.dir ? '/' + c.dir : '') + ' — файлов: ' + files.length;
+    document.getElementById('fvList').innerHTML = files.length === 0
+      ? '<div class="muted" style="margin:4px 0">Пока пусто — нажми «➕ Добавить файлы».</div>'
+      : files.map((f, i) =>
+          '<div class="file-row"><div class="file-name">' + fvIcon(f.name) + ' ' + escapeHtml(f.name) + ' <span class="muted">· ' + ghSize(f.size) + '</span></div>' +
+          '<div class="file-btns">' +
+          '<button class="ghost mini-btn" onclick="fvDownload(' + i + ')" title="Скачать и расшифровать">📤</button>' +
+          '<button class="ghost mini-btn" onclick="fvDelete(' + i + ')" title="Удалить с GitHub">🗑</button></div></div>').join('');
+  } catch (err) {
+    status.textContent = '🗂 GitHub: ошибка — ' + err.message;
+  }
+}
+async function fvMakePayload(file) {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode('kopilka-file:' + fileKeyGet()), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: 120000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, buf));
+  return JSON.stringify({ v: 1, app: 'kopilka-vault-file', name: file.name, mime: file.type || 'application/octet-stream', size: file.size, ts: new Date().toISOString(), salt: vaultB64(salt), iv: vaultB64(iv), blob: vaultB64(ct) });
+}
+async function fvUpload(ev) {
+  const files = Array.from(ev.target.files || []);
+  ev.target.value = '';
+  if (!files.length || !fvUnlocked || fvBusy) return;
+  fvBusy = true;
+  const prog = document.getElementById('fvProgress');
+  let ok = 0, fail = 0;
+  try {
+    let existing = {};
+    try { (await fvListFiles()).forEach(f => { existing[f.name] = f.sha; }); } catch (err) {}
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      prog.textContent = '⏳ Шифрую и загружаю ' + (i + 1) + '/' + files.length + ': ' + f.name + '…';
+      try {
+        if (f.size > 25 * 1024 * 1024) throw new Error('файл больше 25 МБ — GitHub API не примет');
+        const payload = await fvMakePayload(f);
+        const body = { message: 'Kopilka: файл ' + f.name, content: ghB64(payload), branch: fvCfg().branch || 'main' };
+        if (existing[f.name]) body.sha = existing[f.name];
+        await fvReq(fvBase() + '/' + encodeURIComponent(f.name), 'PUT', body);
+        ok++;
+      } catch (err) {
+        fail++;
+        alert('✗ ' + f.name + ': ' + err.message);
+      }
+    }
+    prog.textContent = '';
+    if (ok) showToast('☁️ Загружено файлов: ' + ok + (fail ? ' · с ошибкой: ' + fail : ''));
+    await fvRender();
+  } finally {
+    fvBusy = false;
+  }
+}
+async function fvDownload(i) {
+  const f = (fvListCache || [])[i];
+  if (!f || fvBusy) return;
+  fvBusy = true;
+  const prog = document.getElementById('fvProgress');
+  prog.textContent = '⏳ Скачиваю и расшифровываю: ' + f.name + '…';
+  try {
+    const buf = await fvReq(fvBase() + '/' + encodeURIComponent(f.name) + '?ref=' + encodeURIComponent(fvCfg().branch || 'main'), 'GET', null, true);
+    const parsed = JSON.parse(new TextDecoder().decode(buf));
+    if (!parsed || parsed.app !== 'kopilka-vault-file' || !parsed.blob) throw new Error('неизвестный формат файла');
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode('kopilka-file:' + fileKeyGet()), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: vaultUnb64(parsed.salt), iterations: 120000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: vaultUnb64(parsed.iv) }, key, vaultUnb64(parsed.blob));
+    const bl = new Blob([pt], { type: parsed.mime || 'application/octet-stream' });
+    const url = URL.createObjectURL(bl);
+    const a = document.createElement('a');
+    a.href = url; a.download = parsed.name || f.name; a.click();
+    URL.revokeObjectURL(url);
+    showToast('📤 Файл расшифрован и скачан');
+  } catch (err) {
+    alert('Не удалось скачать/расшифровать: ' + err.message);
+  }
+  prog.textContent = '';
+  fvBusy = false;
+}
+async function fvDelete(i) {
+  const f = (fvListCache || [])[i];
+  if (!f) return;
+  if (!confirm('Удалить ' + f.name + ' с GitHub? Восстановить нельзя.')) return;
+  try {
+    await fvReq(fvBase() + '/' + encodeURIComponent(f.name), 'DELETE', { message: 'Kopilka: удалить ' + f.name, sha: f.sha, branch: fvCfg().branch || 'main' });
+    showToast('🗑 Удалено с GitHub');
+    await fvRender();
+  } catch (err) {
+    alert('Не удалось удалить: ' + err.message);
+  }
+}
+function fvOpenSetup() {
+  const c = fvCfg() || {};
+  document.getElementById('fvUser').value = c.user || '';
+  document.getElementById('fvRepo').value = c.repo || '';
+  document.getElementById('fvBranch').value = c.branch || 'main';
+  document.getElementById('fvDir').value = c.dir || 'secret-files';
+  document.getElementById('fvToken').value = c.token || '';
+  document.getElementById('fvSetupMsg').textContent = '';
+  document.getElementById('fvSetup').style.display = 'block';
+  document.getElementById('fvMain').style.display = 'none';
+}
+function fvCloseSetup() {
+  document.getElementById('fvSetup').style.display = 'none';
+  fvRender();
+}
+async function fvSaveSetup() {
+  const msg = document.getElementById('fvSetupMsg');
+  const user = document.getElementById('fvUser').value.trim();
+  const repo = document.getElementById('fvRepo').value.trim();
+  const branch = document.getElementById('fvBranch').value.trim() || 'main';
+  const dir = document.getElementById('fvDir').value.trim() || 'secret-files';
+  const token = document.getElementById('fvToken').value.trim();
+  if (!user || !repo || !token) { msg.textContent = '✗ Заполни логин, репозиторий и токен'; return; }
+  localStorage.setItem(FV_STORE, JSON.stringify({ user: user, repo: repo, branch: branch, dir: dir, token: token }));
+  msg.textContent = 'Проверяю подключение…';
+  try {
+    const info = await fvReq('https://api.github.com/repos/' + user + '/' + repo, 'GET');
+    if (!info.private) {
+      msg.textContent = '⚠️ Подключилось, но репозиторий ОТКРЫТЫЙ. Сделай закрытым: Settings → General → Danger Zone → Change visibility → Private, затем нажми «Сохранить и проверить» ещё раз.';
+      return;
+    }
+    await fvSyncMeta();
+    showToast('🗂 Секретная папка подключена: ' + info.full_name);
+    await fvRender();
+  } catch (err) {
+    msg.textContent = '✗ ' + err.message;
+  }
+}
+function fvDisconnect() {
+  if (!confirm('Отключить репозиторий от Секретной папки? Сами файлы останутся на GitHub.')) return;
+  localStorage.removeItem(FV_STORE);
+  fvListCache = null;
+  fvRender();
+  showToast('✖ Репозиторий отключён');
 }
 
 // ============ ИНИЦИАЛИЗАЦИЯ ============
