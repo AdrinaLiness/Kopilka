@@ -317,8 +317,55 @@
       <button class="secondary" onclick="document.getElementById('importFile').click()">Загрузить JSON</button>
     </div>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="secondary" onclick="vaultBtn()">🔐 Секретная папка</button>
     <button class="danger" onclick="resetAll()">Удалить все данные</button>
     <div class="muted" style="margin-top:8px">Данные хранятся в браузере. Раз в неделю делай резервную копию!</div>
+  </div>
+
+  <div class="card" id="vaultCard" style="display:none">
+    <h3>🔐 Секретная папка</h3>
+    <div id="vaultSetup" style="display:none">
+      <div class="muted" style="margin-bottom:8px">Придумай код из 4 цифр — им зашифруются сохранения. Код нигде не хранится: без него копии не прочитать. Запиши код в надёжном месте!</div>
+      <input type="password" id="vaultPin1" inputmode="numeric" maxlength="4" placeholder="Код (4 цифры)" style="width:100%;margin-bottom:6px">
+      <input type="password" id="vaultPin2" inputmode="numeric" maxlength="4" placeholder="Повтори код" style="width:100%;margin-bottom:8px">
+      <button onclick="vaultCreate()">🔐 Создать папку</button>
+    </div>
+    <div id="vaultLocked" style="display:none">
+      <div class="muted" id="vaultLockedInfo" style="margin-bottom:8px">В папке сохранений: 0</div>
+      <input type="password" id="vaultPin" inputmode="numeric" maxlength="4" placeholder="Код из 4 цифр" style="width:100%;margin-bottom:8px">
+      <button onclick="vaultUnlock()">🔓 Открыть папку</button>
+    </div>
+    <div id="vaultOpen" style="display:none">
+      <div class="muted" style="margin-bottom:8px">Открыто. Сохранения зашифрованы кодом — скачанный файл без кода не прочитать.</div>
+      <div class="row">
+        <button onclick="vaultSnapshot()">💾 Сохранить копию</button>
+        <button class="secondary" onclick="vaultCloudSave()">☁️ Копия в GitHub</button>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <button class="secondary" onclick="document.getElementById('vaultImportFile').click()">📥 Загрузить файл</button>
+      </div>
+      <input type="file" id="vaultImportFile" accept=".json" style="display:none" onchange="vaultImport(event)">
+      <div id="vaultList" style="margin-top:8px"></div>
+      <div id="ghCloud" style="margin-top:10px"></div>
+      <div id="ghSetup" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--input-border)">
+        <div class="muted" style="margin-bottom:6px">Копии будут загружаться в <b>закрытый</b> репозиторий. Нужен токен: github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens → только этот репозиторий, право «Contents: Read and write». Файлы зашифрованы кодом — даже GitHub не прочитает их.</div>
+        <input type="text" id="ghUser" placeholder="Логин GitHub (напр. Kira0784)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="ghRepo" placeholder="Имя закрытого репозитория (напр. Kopilka-backup)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="ghBranch" placeholder="Ветка (обычно main)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="ghDir" placeholder="Папка в репозитории (напр. kopilka-backups)" style="width:100%;margin-bottom:6px">
+        <input type="password" id="ghToken" placeholder="Токен (github_pat_… или ghp_…)" style="width:100%;margin-bottom:8px">
+        <div class="row">
+          <button onclick="ghSaveSetup()">💾 Сохранить и проверить</button>
+          <button class="ghost" onclick="ghCloseSetup()">Отмена</button>
+        </div>
+        <div class="muted" id="ghSetupMsg" style="margin-top:6px"></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="ghost" onclick="vaultLock()">🔒 Закрыть</button>
+        <button class="ghost" onclick="vaultChangePin()">🔁 Сменить код</button>
+        <button class="ghost" onclick="vaultRemove()">❌ Удалить папку</button>
+      </div>
+    </div>
   </div>
 
 </div><!-- /page-income -->
@@ -366,13 +413,22 @@
     </div>
     <div class="row">
       <input type="text" id="eventReward" placeholder="Бонус (напр. +1500 ₽, шаурма)">
-      <input type="date" id="eventDeadline">
+    </div>
+    <div class="row">
+      <div style="flex:1;min-width:0">
+        <div class="muted" style="font-size:11px;margin:0 0 2px 4px">Действует с</div>
+        <input type="date" id="eventStart">
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="muted" style="font-size:11px;margin:0 0 2px 4px">по (включительно)</div>
+        <input type="date" id="eventDeadline">
+      </div>
     </div>
     <div class="quick-btns">
       <button onclick="addEvent()">🎯 Создать событие</button>
       <button class="secondary" onclick="randomEvent()">🎲 Сгенерировать</button>
     </div>
-    <div class="muted" style="margin-top:6px">Как бонусы в курьерке: «доставь N заказов — получи приз». Прогресс считается по записям от даты создания события. Выполнил — конфетти и забирай бонус! Заказы вводи в форме «Добавить день» или впиши задним числом в столбик 🛵 таблицы «Все записи».</div>
+    <div class="muted" style="margin-top:6px">Как бонусы в курьерке: «доставь N заказов — получи приз». Прогресс считается по записям за период события — с даты «Действует с» по дедлайн включительно. Выполнил — конфетти и забирай бонус! Заказы вводи в форме «Добавить день» или впиши задним числом в столбик 🛵 таблицы «Все записи».</div>
     <div id="eventsArchiveWrap" style="display:none;margin-top:12px">
       <button class="ghost" onclick="toggleArchive()" style="width:100%;margin-bottom:8px"><span id="archChevron">▸</span> 🏆 Архив событий (<span id="archCount">0</span>)</button>
       <div id="eventsArchiveList" style="display:none"></div>
@@ -1451,7 +1507,7 @@ function eventAmount(ev) {
   return fmt(ev.target) + ' ' + plural(ev.target, m.one, m.few, m.gen);
 }
 function eventProgress(ev) {
-  const rel = entries.filter(e => !e.gift && e.date >= ev.start && e.date <= todayStr());
+  const rel = entries.filter(e => !e.gift && e.date >= ev.start && e.date <= (ev.deadline || todayStr()));
   if (ev.type === 'orders') return rel.reduce((s,e) => s + (e.orders || 0), 0);
   if (ev.type === 'hours')  return rel.reduce((s,e) => s + (e.hours || 0), 0);
   if (ev.type === 'earned') return rel.reduce((s,e) => s + e.earned, 0);
@@ -1477,10 +1533,13 @@ function addEvent() {
   const deadline = document.getElementById('eventDeadline').value;
   if (!target || target <= 0) return alert('Укажи, сколько нужно выполнить');
   const today = todayStr();
-  events.push({ id: Date.now(), type, target, reward, deadline, start: today, createdAt: today, done: false, doneDate: null });
+  const start = document.getElementById('eventStart').value || today;
+  if (deadline && start > deadline) return alert('Дата «Действует с» не может быть позже дедлайна');
+  events.push({ id: Date.now(), type, target, reward, deadline, start, createdAt: today, done: false, doneDate: null });
   saveEvents();
   document.getElementById('eventTarget').value = '';
   document.getElementById('eventReward').value = '';
+  document.getElementById('eventStart').value = today;
   updateEvents();
   showToast('🎲 Событие создано! Погнали!');
 }
@@ -1493,8 +1552,10 @@ function randomEvent() {
   const withOrders = earnEntries.filter(e => e.orders > 0);
   const avgOrders = withOrders.length ? withOrders.reduce((s,e) => s + e.orders, 0) / withOrders.length : 12;
   const avgHours = daysWorked ? earnEntries.reduce((s,e) => s + (e.hours || 0), 0) / daysWorked : 6;
+  const start = (document.getElementById('eventStart') || {}).value || today;
   const dur = 3 + Math.floor(Math.random() * 5);
-  const deadline = localDateStr(new Date(Date.now() + dur * 86400000));
+  const base = start > today ? start : today;
+  const deadline = localDateStr(new Date(new Date(base + 'T12:00:00').getTime() + dur * 86400000));
   const types = ['orders','hours','earned','shifts'];
   const type = types[Math.floor(Math.random() * types.length)];
   let target;
@@ -1503,7 +1564,7 @@ function randomEvent() {
   else if (type === 'earned') target = Math.max(500, Math.round(avgDayEarn * dur * (1.05 + Math.random() * 0.3) / 100) * 100);
   else target = Math.max(2, Math.round(dur * 0.6));
   const reward = RANDOM_REWARDS[Math.floor(Math.random() * RANDOM_REWARDS.length)];
-  events.push({ id: Date.now(), type, target, reward, deadline, start: today, createdAt: today, done: false, doneDate: null });
+  events.push({ id: Date.now(), type, target, reward, deadline, start, createdAt: today, done: false, doneDate: null });
   saveEvents();
   updateEvents();
   showToast('🎲 Событие: ' + EVENT_META[type].icon + ' ' + fmt(target) + ' ' + plural(target, EVENT_META[type].one, EVENT_META[type].few, EVENT_META[type].gen) + ' за ' + dur + ' ' + daysWord(dur));
@@ -1514,6 +1575,7 @@ function deleteEvent(id) {
   saveEvents();
   updateEvents();
 }
+function shortDate(ds) { return ds ? ds.slice(8, 10) + '.' + ds.slice(5, 7) : '?'; }
 // Карточка события: inArchive=false — активная (со сроком и темпом), true — архивная (итог + удаление)
 function eventCard(ev, today, inArchive) {
   const m = EVENT_META[ev.type] || EVENT_META.orders;
@@ -1524,7 +1586,7 @@ function eventCard(ev, today, inArchive) {
   if (inArchive) {
     if (ev.done) extra = '<span class="badge good">✅ выполнено ' + (ev.doneDate || '') + '</span>';
     else extra = '<span class="badge bad">⏰ не успел — дедлайн был ' + (ev.deadline || '?') + '</span>';
-    dl = '📅 ' + (ev.start || '?') + ' → ' + (ev.done ? (ev.doneDate || '') : (ev.deadline || '?'));
+    dl = '📅 ' + shortDate(ev.start) + ' → ' + (ev.done ? shortDate(ev.doneDate) : shortDate(ev.deadline));
   } else if (ev.deadline) {
     const dLeft = daysBetween(today, ev.deadline);
     if (dLeft === 0) dl = '⏰ последний день — успей до 00:00!';
@@ -1540,6 +1602,7 @@ function eventCard(ev, today, inArchive) {
     '<span class="cat-tag gift-tag">🎁 ' + escapeHtml(ev.reward || 'бонус') + '</span></div>' +
     '<div class="progress-bar"><div class="progress-fill' + (ev.done ? ' orange' : '') + '" style="width:' + pct + '%"></div><div class="progress-text">' + Math.floor(pct) + '%</div></div>' +
     '<div class="stat"><span>' + m.acc + ': ' + fmt(Math.min(raw, ev.target)) + ' / ' + fmt(ev.target) + (over && !ev.done ? ' (перевыполнил! ' + fmt(raw) + ')' : '') + '</span>' + (inArchive ? extra : '<b>' + dl + '</b>') + '</div>' +
+    (!inArchive && ev.start ? '<div class="stat"><span style="opacity:.75">📅 Действует</span><b>с ' + shortDate(ev.start) + (ev.deadline ? ' по ' + shortDate(ev.deadline) + ' включительно' : ' (без срока)') + '</b></div>' : '') +
     (pace ? '<div class="stat"><span style="opacity:.75">📍 Чтобы успеть</span><b style="color:#e67e22">' + pace + '</b></div>' : '') +
     (inArchive ? '<div class="stat"><span style="opacity:.75">Период</span><b>' + dl + '</b></div>' : '') +
     (inArchive ? '<div class="quick-btns"><button onclick="deleteEvent(' + ev.id + ')">🗑 Удалить</button></div>' : '');
@@ -1556,6 +1619,8 @@ function updateEvents() {
   const box = document.getElementById('eventsList');
   if (!box) return;
   const today = todayStr();
+  const esDef = document.getElementById('eventStart');
+  if (esDef && !esDef.value) esDef.value = today;
   let justDone = null;
   events.forEach(ev => {
     if (!ev.done && eventProgress(ev) >= ev.target) {
@@ -2169,6 +2234,451 @@ function resetAll() {
   showToast('🗑 Все данные удалены');
 }
 
+// ============ СЕКРЕТНАЯ ПАПКА (шифрованные сохранения) ============
+const VAULT_KEY = 'income_tracker_vault_v1';
+let vaultKeyObj = null;   // CryptoKey сессии (в памяти, умирает при перезагрузке страницы)
+let vaultPinCache = null; // код сессии — нужен для расшифровки импортируемых файлов (у них своя соль)
+function vaultB64(u8) { let s = ''; for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); }
+function vaultUnb64(str) { const s = atob(str); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+function vaultLoad() { try { return JSON.parse(localStorage.getItem(VAULT_KEY) || 'null'); } catch (err) { return null; } }
+function vaultSaveData(v) { localStorage.setItem(VAULT_KEY, JSON.stringify(v)); }
+function vaultStoreOk() { return !!(window.crypto && crypto.subtle && crypto.subtle.importKey && crypto.subtle.deriveKey); }
+function snapshotData() {
+  return { entries: entries, settings: settings, feeds: feeds, drops: drops, games: games, wishes: wishes, events: events, exportedAt: new Date().toISOString() };
+}
+async function vaultDeriveKey(pin, salt) {
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey('raw', enc.encode('kopilka:' + pin), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: enc.encode(salt), iterations: 120000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function vaultEnc(key, obj) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
+  return { iv: vaultB64(iv), ct: vaultB64(new Uint8Array(ct)) };
+}
+async function vaultDec(key, blob) {
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: vaultUnb64(blob.iv) }, key, vaultUnb64(blob.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function vaultBtn() {
+  const card = document.getElementById('vaultCard');
+  card.style.display = card.style.display === 'none' ? 'block' : 'none';
+  if (card.style.display === 'block') renderVault();
+}
+function vaultShow(which) {
+  document.getElementById('vaultSetup').style.display = which === 'setup' ? 'block' : 'none';
+  document.getElementById('vaultLocked').style.display = which === 'locked' ? 'block' : 'none';
+  document.getElementById('vaultOpen').style.display = which === 'open' ? 'block' : 'none';
+}
+function renderVault() {
+  const card = document.getElementById('vaultCard');
+  if (!card) return;
+  if (!vaultStoreOk()) {
+    vaultShow('setup');
+    document.getElementById('vaultSetup').innerHTML = '<div class="muted">Шифрование недоступно в этом браузере. Открой Копилку по https-адресу или в современном браузере.</div>';
+    return;
+  }
+  const store = vaultLoad();
+  if (vaultKeyObj) {
+    const saves = store && store.saves ? store.saves : [];
+    document.getElementById('vaultList').innerHTML = saves.length === 0
+      ? '<div class="muted" style="margin:6px 0">Пока пусто. Сделай первое сохранение 👆</div>'
+      : saves.map(sv =>
+          '<div class="stat"><span>🗃 ' + new Date(sv.ts).toLocaleString() + '</span>' +
+          '<span style="white-space:nowrap">' +
+          '<button class="ghost" style="padding:2px 8px" onclick="vaultRestore(' + sv.id + ')" title="Восстановить">♻️</button>' +
+          '<button class="ghost" style="padding:2px 8px" onclick="vaultDownload(' + sv.id + ')" title="Скачать шифрованный файл">📤</button>' +
+          '<button class="ghost" style="padding:2px 8px" onclick="vaultPush(' + sv.id + ')" title="Загрузить на GitHub">☁️</button>' +
+          '<button class="ghost" style="padding:2px 8px" onclick="vaultDelete(' + sv.id + ')" title="Удалить">🗑</button></span></div>').join('');
+    vaultShow('open');
+    vaultRenderCloud();
+    return;
+  }
+  if (!store) {
+    document.getElementById('vaultPin1').value = '';
+    document.getElementById('vaultPin2').value = '';
+    vaultShow('setup');
+  } else {
+    document.getElementById('vaultLockedInfo').textContent = 'В папке сохранений: ' + (store.saves ? store.saves.length : 0) + '. Введи код, чтобы открыть.';
+    document.getElementById('vaultPin').value = '';
+    vaultShow('locked');
+  }
+}
+async function vaultCreate() {
+  const p1 = document.getElementById('vaultPin1').value.trim();
+  const p2 = document.getElementById('vaultPin2').value.trim();
+  if (!/^\d{4}$/.test(p1)) return alert('Код должен быть ровно 4 цифры');
+  if (p1 !== p2) return alert('Коды не совпадают');
+  const salt = vaultB64(crypto.getRandomValues(new Uint8Array(16)));
+  const key = await vaultDeriveKey(p1, salt);
+  const probe = await vaultEnc(key, { probe: 'kopilka' });
+  vaultSaveData({ v: 1, salt: salt, probe: probe, saves: [] });
+  vaultKeyObj = key; vaultPinCache = p1;
+  renderVault();
+  showToast('🔐 Секретная папка создана');
+}
+async function vaultUnlock() {
+  const store = vaultLoad();
+  if (!store) return;
+  const pin = document.getElementById('vaultPin').value.trim();
+  try {
+    const key = await vaultDeriveKey(pin, store.salt);
+    await vaultDec(key, store.probe); // неверный код → исключение
+    vaultKeyObj = key; vaultPinCache = pin;
+    renderVault();
+    showToast('🔓 Папка открыта');
+  } catch (err) {
+    alert('Неверный код');
+  }
+}
+function vaultLock() { vaultKeyObj = null; vaultPinCache = null; renderVault(); }
+async function vaultSnapshot() {
+  if (!vaultKeyObj) return;
+  const store = vaultLoad();
+  const blob = await vaultEnc(vaultKeyObj, snapshotData());
+  store.saves = store.saves || [];
+  store.saves.unshift({ id: Date.now(), ts: Date.now(), blob: blob });
+  vaultSaveData(store);
+  renderVault();
+  showToast('💾 Сохранение в секретной папке');
+}
+function vaultApplyData(data) {
+  if (data.entries) entries = data.entries;
+  if (data.settings) settings = data.settings;
+  if (data.feeds) feeds = data.feeds;
+  if (data.drops) drops = data.drops;
+  if (data.games) games = data.games;
+  if (data.wishes) wishes = data.wishes;
+  if (data.events) events = data.events;
+  saveIncome(); saveFeeds(); saveDrops(); saveGames(); saveWishes(); saveEvents();
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  document.getElementById('weeklyPlanInput').value = settings.weeklyPlan || 3500;
+  document.getElementById('piggyGoalInput').value = settings.goal;
+  document.getElementById('piggyDeadlineInput').value = settings.deadline;
+  renderIncome(); renderPiggy(); renderChicken(); renderDrops(); renderHours();
+}
+async function vaultRestore(id) {
+  if (!confirm('Восстановить данные из сохранения? Текущие записи будут заменены.')) return;
+  const store = vaultLoad();
+  const sv = (store.saves || []).find(s => s.id === id);
+  if (!sv) return;
+  try {
+    const data = await vaultDec(vaultKeyObj, sv.blob);
+    vaultApplyData(data);
+    showToast('♻️ Данные восстановлены из секретной папки');
+  } catch (err) {
+    alert('Не удалось расшифровать сохранение');
+  }
+}
+async function vaultDownload(id) {
+  const store = vaultLoad();
+  const sv = (store.saves || []).find(s => s.id === id);
+  if (!sv) return;
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const name = 'kopilka_secret_' + localDateStr(d) + '_' + pad(d.getHours()) + pad(d.getMinutes()) + '.json';
+  const payload = { v: 1, app: 'kopilka-secret', ts: sv.ts, salt: store.salt, blob: sv.blob };
+  const bl = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(bl);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
+  showToast('📤 Шифрованный файл скачан');
+}
+function vaultImportFileClick() { document.getElementById('vaultImportFile').click(); }
+async function vaultImport(ev) {
+  const file = ev.target.files[0];
+  ev.target.value = '';
+  if (!file || !vaultKeyObj) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      let data;
+      if (parsed && parsed.app === 'kopilka-secret' && parsed.blob) {
+        const fileKey = await vaultDeriveKey(vaultPinCache, parsed.salt);
+        data = await vaultDec(fileKey, parsed.blob);
+      } else if (parsed && parsed.entries) {
+        data = parsed; // обычный (незашифрованный) JSON-бэкап — тоже можно спрятать
+      } else return alert('Это не файл сохранения Копилки');
+      const store = vaultLoad();
+      const blob = await vaultEnc(vaultKeyObj, data);
+      store.saves = store.saves || [];
+      store.saves.unshift({ id: Date.now(), ts: parsed.ts ? (Date.parse(parsed.ts) || Date.now()) : Date.now(), blob: blob });
+      vaultSaveData(store);
+      renderVault();
+      showToast('📥 Сохранение спрятано в папку');
+    } catch (err) {
+      alert('Не удалось прочитать файл (другой код или файл повреждён)');
+    }
+  };
+  reader.readAsText(file);
+}
+async function vaultDelete(id) {
+  if (!confirm('Удалить это сохранение из папки?')) return;
+  const store = vaultLoad();
+  store.saves = (store.saves || []).filter(s => s.id !== id);
+  vaultSaveData(store);
+  renderVault();
+}
+async function vaultChangePin() {
+  const p1 = prompt('Новый код (4 цифры):');
+  if (p1 === null) return;
+  const p2 = prompt('Повтори новый код:');
+  if (p2 === null) return;
+  if (!/^\d{4}$/.test(p1) || p1 !== p2) return alert('Код должен быть 4 цифры, и обе попытки — одинаковые');
+  const store = vaultLoad();
+  const newSalt = vaultB64(crypto.getRandomValues(new Uint8Array(16)));
+  const newKey = await vaultDeriveKey(p1, newSalt);
+  const saves = [];
+  for (const sv of (store.saves || [])) {
+    const data = await vaultDec(vaultKeyObj, sv.blob);
+    saves.push({ id: sv.id, ts: sv.ts, blob: await vaultEnc(newKey, data) });
+  }
+  const probe = await vaultEnc(newKey, { probe: 'kopilka' });
+  vaultSaveData({ v: 1, salt: newSalt, probe: probe, saves: saves });
+  vaultKeyObj = newKey; vaultPinCache = p1;
+  renderVault();
+  showToast('🔁 Код изменён — все копии перешфрованы');
+}
+function vaultRemove() {
+  if (!confirm('Удалить секретную папку СО ВСЕМИ сохранениями? Это необратимо.')) return;
+  if (!confirm('Точно? Копии нельзя будет вернуть.')) return;
+  localStorage.removeItem(VAULT_KEY);
+  vaultLock();
+  showToast('❌ Секретная папка удалена');
+}
+
+// ============ ОБЛАКО GITHUB (закрытый репозиторий) ============
+const GH_KEY = 'income_tracker_gh_v1';
+let ghLoadedOnce = false;
+let ghBusy = false;
+function ghCfg() { try { return JSON.parse(localStorage.getItem(GH_KEY) || 'null'); } catch (err) { return null; } }
+function ghConnected() { const c = ghCfg(); return !!(c && c.user && c.repo && c.token); }
+function ghB64(str) { return btoa(unescape(encodeURIComponent(str))); }
+function ghUnb64(b64) { return decodeURIComponent(escape(atob(String(b64).replace(/\n/g, '')))); }
+function ghBase() {
+  const c = ghCfg();
+  return 'https://api.github.com/repos/' + c.user + '/' + c.repo + '/contents' + (c.dir ? '/' + c.dir.replace(/^\/+|\/+$/g, '') : '');
+}
+function ghSize(n) { return n < 1024 ? n + ' Б' : n < 1048576 ? (n / 1024).toFixed(1) + ' КБ' : (n / 1048576).toFixed(2) + ' МБ'; }
+async function ghReq(url, method, body) {
+  const c = ghCfg();
+  const res = await fetch(url, {
+    method: method,
+    headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + c.token, 'X-GitHub-Api-Version': '2022-11-28' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = null;
+  try { j = await res.json(); } catch (err) { j = null; }
+  if (!res.ok) {
+    const raw = (j && j.message) || ('HTTP ' + res.status);
+    let msg = raw;
+    if (res.status === 401) msg = 'токен неверный или устарел (401)';
+    else if (res.status === 404) msg = 'репозиторий/папка не найдены (404) — проверь логин, имя репозитория и доступ токена к нему';
+    else if (res.status === 403 && /rate limit/i.test(raw)) msg = 'лимит запросов GitHub, попробуй позже';
+    throw new Error(msg);
+  }
+  return j;
+}
+async function ghTryGet(url) {
+  try {
+    const c = ghCfg();
+    const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + c.token } });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) { return null; }
+}
+async function ghPutFile(name, text) {
+  const c = ghCfg();
+  const ex = await ghTryGet(ghBase() + '/' + encodeURIComponent(name) + '?ref=' + encodeURIComponent(c.branch || 'main'));
+  const body = { message: 'Kopilka: копия ' + name, content: ghB64(text), branch: c.branch || 'main' };
+  if (ex && ex.sha) body.sha = ex.sha;
+  return await ghReq(ghBase() + '/' + encodeURIComponent(name), 'PUT', body);
+}
+async function ghReadFile(name) {
+  const c = ghCfg();
+  const j = await ghReq(ghBase() + '/' + encodeURIComponent(name) + '?ref=' + encodeURIComponent(c.branch || 'main'), 'GET');
+  return ghUnb64(j.content);
+}
+async function ghDeleteFile(name, sha) {
+  const c = ghCfg();
+  await ghReq(ghBase() + '/' + encodeURIComponent(name), 'DELETE', { message: 'Kopilka: удалить ' + name, sha: sha, branch: c.branch || 'main' });
+}
+async function ghListFiles() {
+  const c = ghCfg();
+  const j = await ghReq(ghBase() + '?ref=' + encodeURIComponent(c.branch || 'main'), 'GET');
+  if (!Array.isArray(j)) throw new Error('папка недоступна');
+  return j.filter(f => f.type === 'file' && /\.json$/i.test(f.name));
+}
+function vaultGhOpenSetup() {
+  const c = ghCfg() || {};
+  document.getElementById('ghUser').value = c.user || '';
+  document.getElementById('ghRepo').value = c.repo || '';
+  document.getElementById('ghBranch').value = c.branch || 'main';
+  document.getElementById('ghDir').value = c.dir || 'kopilka-backups';
+  document.getElementById('ghToken').value = c.token || '';
+  document.getElementById('ghSetupMsg').textContent = '';
+  document.getElementById('ghSetup').style.display = 'block';
+}
+function ghCloseSetup() {
+  document.getElementById('ghSetup').style.display = 'none';
+  vaultRenderCloud(true);
+}
+async function ghSaveSetup() {
+  const msg = document.getElementById('ghSetupMsg');
+  const user = document.getElementById('ghUser').value.trim();
+  const repo = document.getElementById('ghRepo').value.trim();
+  const branch = document.getElementById('ghBranch').value.trim() || 'main';
+  const dir = document.getElementById('ghDir').value.trim() || 'kopilka-backups';
+  const token = document.getElementById('ghToken').value.trim();
+  if (!user || !repo || !token) { msg.textContent = '✗ Заполни логин, репозиторий и токен'; return; }
+  localStorage.setItem(GH_KEY, JSON.stringify({ user: user, repo: repo, branch: branch, dir: dir, token: token }));
+  msg.textContent = 'Проверяю подключение…';
+  try {
+    const info = await ghReq('https://api.github.com/repos/' + user + '/' + repo, 'GET');
+    if (info.private) {
+      ghLoadedOnce = false;
+      ghCloseSetup();
+      showToast('☁️ GitHub подключён: ' + info.full_name);
+    } else {
+      msg.textContent = '⚠️ Подключилось, но репозиторий ОТКРЫТЫЙ. Сделай закрытым: Settings → General → Danger Zone → Change visibility → Private, затем нажми «Сохранить и проверить» ещё раз.';
+    }
+  } catch (err) {
+    msg.textContent = '✗ ' + err.message;
+  }
+}
+function ghDisconnect() {
+  if (!confirm('Отключить облако GitHub? Файлы в репозитории останутся на месте.')) return;
+  localStorage.removeItem(GH_KEY);
+  ghLoadedOnce = false;
+  vaultRenderCloud(true);
+  showToast('☁️ Облако отключено');
+}
+async function vaultRenderCloud(force) {
+  const box = document.getElementById('ghCloud');
+  if (!box || !vaultKeyObj) return;
+  if (!ghConnected()) {
+    ghLoadedOnce = false;
+    box.innerHTML = '<div class="muted" style="margin:0 0 6px">☁️ Облако не подключено — копии живут только на этом устройстве.</div><button class="secondary" onclick="vaultGhOpenSetup()">⚙️ Подключить GitHub</button>';
+    return;
+  }
+  if (ghLoadedOnce && !force) return;
+  if (document.getElementById('ghSetup').style.display === 'block') return;
+  const c = ghCfg();
+  const head = escapeHtml(c.user + '/' + c.repo) + (c.dir ? '<span class="muted">/' + escapeHtml(c.dir) + '</span>' : '');
+  box.innerHTML = '<div class="muted gh-status" style="margin:0 0 6px">☁️ GitHub: ' + head + ' — загружаю…</div><div class="gh-list" style="margin-bottom:6px"></div>' +
+    '<div class="row"><button class="ghost" onclick="vaultCloudRefresh()">🔄 Обновить</button><button class="ghost" onclick="vaultGhOpenSetup()">⚙️ Настройки</button><button class="ghost" onclick="ghDisconnect()">✖ Отключить</button></div>';
+  try {
+    const files = await ghListFiles();
+    const list = box.querySelector('.gh-list');
+    if (!list) return;
+    box.querySelector('.gh-status').textContent = '☁️ GitHub: ' + c.user + '/' + c.repo + (c.dir ? '/' + c.dir : '') + ' — файлов: ' + files.length;
+    list.innerHTML = files.length === 0
+      ? '<div class="muted" style="margin:4px 0">Пока пусто — нажми «☁️ Копия в GitHub».</div>'
+      : files.map(f =>
+          '<div class="stat"><span style="min-width:0;word-break:break-all">📄 ' + escapeHtml(f.name) + ' <span class="muted">· ' + ghSize(f.size) + '</span></span>' +
+          '<span style="white-space:nowrap;flex-shrink:0">' +
+          '<button class="ghost" style="padding:2px 8px" onclick="vaultCloudRestore(\'' + f.name + '\')" title="Восстановить из облака">♻️</button>' +
+          '<button class="ghost" style="padding:2px 8px" onclick="vaultCloudDownload(\'' + f.name + '\')" title="Скачать с GitHub">📤</button>' +
+          '<button class="ghost" style="padding:2px 8px" onclick="vaultCloudDelete(\'' + f.name + '\',\'' + f.sha + '\')" title="Удалить с GitHub">🗑</button></span></div>').join('');
+    ghLoadedOnce = true;
+  } catch (err) {
+    ghLoadedOnce = false;
+    box.querySelector('.gh-status').textContent = '☁️ GitHub: ошибка — ' + err.message;
+  }
+}
+function vaultCloudRefresh() { vaultRenderCloud(true); }
+function ghCloudFileName(tsMs) {
+  const d = new Date(tsMs);
+  const pad = n => String(n).padStart(2, '0');
+  return 'kopilka_' + localDateStr(d) + '_' + pad(d.getHours()) + pad(d.getMinutes()) + '.json';
+}
+async function vaultCloudSave() {
+  if (!vaultKeyObj) return;
+  if (!ghConnected()) { vaultGhOpenSetup(); return; }
+  if (ghBusy) return;
+  ghBusy = true;
+  try {
+    const store = vaultLoad();
+    const blob = await vaultEnc(vaultKeyObj, snapshotData());
+    const now = Date.now();
+    const name = ghCloudFileName(now);
+    const payload = { v: 1, app: 'kopilka-secret', ts: new Date(now).toISOString(), salt: store.salt, blob: blob };
+    const text = JSON.stringify(payload, null, 2);
+    if (text.length > 900 * 1024) throw new Error('файл больше 900 КБ — GitHub API не примет');
+    await ghPutFile(name, text);
+    showToast('☁️ Копия загружена на GitHub');
+    await vaultRenderCloud(true);
+  } catch (err) {
+    alert('Не удалось загрузить копию на GitHub: ' + err.message);
+  }
+  ghBusy = false;
+}
+async function vaultPush(id) {
+  if (!vaultKeyObj) return;
+  if (!ghConnected()) { vaultGhOpenSetup(); return; }
+  const store = vaultLoad();
+  const sv = (store.saves || []).find(s => s.id === id);
+  if (!sv) return;
+  try {
+    const payload = { v: 1, app: 'kopilka-secret', ts: new Date(sv.ts).toISOString(), salt: store.salt, blob: sv.blob };
+    await ghPutFile(ghCloudFileName(sv.ts), JSON.stringify(payload, null, 2));
+    showToast('☁️ Копия загружена на GitHub');
+    await vaultRenderCloud(true);
+  } catch (err) {
+    alert('Не удалось загрузить на GitHub: ' + err.message);
+  }
+}
+async function vaultCloudRestore(name) {
+  if (!confirm('Восстановить данные из файла ' + name + ' с GitHub? Текущие записи будут заменены.')) return;
+  try {
+    const text = await ghReadFile(name);
+    const parsed = JSON.parse(text);
+    let data;
+    if (parsed && parsed.app === 'kopilka-secret' && parsed.blob) {
+      try {
+        const fileKey = await vaultDeriveKey(vaultPinCache, parsed.salt);
+        data = await vaultDec(fileKey, parsed.blob);
+      } catch (e1) {
+        const oldPin = prompt('Файл зашифрован другим кодом. Введи код этого файла (4 цифры):');
+        if (oldPin === null) return;
+        const k2 = await vaultDeriveKey(oldPin.trim(), parsed.salt);
+        data = await vaultDec(k2, parsed.blob);
+      }
+    } else if (parsed && parsed.entries) {
+      data = parsed; // незашифрованный JSON-бэкап из облака — тоже можно восстановить
+    } else return alert('Это не файл сохранения Копилки');
+    vaultApplyData(data);
+    showToast('♻️ Восстановлено с GitHub');
+  } catch (err) {
+    alert('Не удалось восстановить (неверный код, файл повреждён или ошибка сети): ' + err.message);
+  }
+}
+async function vaultCloudDownload(name) {
+  try {
+    const text = await ghReadFile(name);
+    const bl = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(bl);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+    showToast('📤 Файл скачан с GitHub');
+  } catch (err) {
+    alert('Не удалось скачать: ' + err.message);
+  }
+}
+async function vaultCloudDelete(name, sha) {
+  if (!confirm('Удалить ' + name + ' с GitHub?')) return;
+  try {
+    await ghDeleteFile(name, sha);
+    showToast('🗑 Удалено с GitHub');
+    await vaultRenderCloud(true);
+  } catch (err) {
+    alert('Не удалось удалить: ' + err.message);
+  }
+}
+
 // ============ ИНИЦИАЛИЗАЦИЯ ============
 document.getElementById('date').value = todayStr();
 document.getElementById('feedDate').value = todayStr();
@@ -2189,6 +2699,8 @@ function checkDateRollover() {
     lastActiveDate = d;
     renderIncome(); renderPiggy(); renderChicken(); renderDrops(); renderHours();
     renderRemind();
+    const esNew = document.getElementById('eventStart');
+    if (esNew && document.activeElement !== esNew) esNew.value = d;
     showToast('📅 Новый день — списки обновлены');
   }
 }
