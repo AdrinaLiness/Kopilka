@@ -534,7 +534,7 @@
       <button onclick="fvUnlock()">🔓 Открыть папку</button>
     </div>
     <div id="fvPanel" style="display:none;margin-top:8px">
-      <div class="muted" style="margin-bottom:8px">Здесь лежат <b>любые файлы</b>: txt, word, фото, видео и т.д. Каждый файл шифруется твоим ключом перед загрузкой — на GitHub он попадает уже зашифрованным. Один файл — до 25 МБ.</div>
+      <div class="muted" style="margin-bottom:8px">Здесь лежат <b>любые файлы</b>: txt, word, фото, видео и т.д. Каждый файл шифруется твоим ключом перед загрузкой — на GitHub он попадает уже зашифрованным. Один файл — до 90 МБ (жёсткий лимит GitHub — 100 МБ на файл, больше он не хранит вообще, так что видео на сотни МБ сначала сожми).</div>
       <div id="fvSetup" style="display:none">
         <div class="muted" style="margin-bottom:6px">Файлы будут загружаться в <b>закрытый</b> репозиторий GitHub. Заведи для них новый (как Kopilka-backup, только Private): в токене должно быть право доступа и к этому репозиторию — «Contents: Read and write».</div>
         <input type="text" id="fvUser" placeholder="Логин GitHub (напр. Kira0784)" style="width:100%;margin-bottom:6px">
@@ -676,9 +676,9 @@
       <li>Подтверди — иконка 🐷 появится на рабочем столе</li>
     </ol>
     <p style="font-size:14px;margin:8px 0 2px"><b>iPhone (Safari):</b> «Поделиться» → «На экран „Домой“».</p>
-    <div class="muted" style="margin-top:8px">На сайте рядом с Kopilka.html должен лежать файл <b>sw.js</b> — он включает кнопку «Установить приложение» и офлайн-режим.</div>
+    <div class="muted" style="margin-top:8px">На сайте рядом с index.html должен лежать файл <b>sw.js</b> — он включает кнопку «Установить приложение» и офлайн-режим.</div>
     <div class="muted" style="margin-top:6px">Нет своего сайта? Перетащи оба файла в папке на <b>netlify.com/drop</b> — получишь ссылку и сможешь установить приложение.</div>
-    <div class="muted" style="margin-top:6px">«Приложение» — это тот же файл: любые обновления Kopilka.html сразу появляются и на сайте, и в приложении. Данные хранятся в браузере телефона и никуда не пропадают.</div>
+    <div class="muted" style="margin-top:6px">«Приложение» — это тот же файл: любые обновления index.html сразу появляются и на сайте, и в приложении. Данные хранятся в браузере телефона и никуда не пропадают.</div>
     <button class="secondary" onclick="closeInstallHelp()" style="margin-top:12px">Понятно 👍</button>
   </div>
 </div>
@@ -2919,15 +2919,16 @@ async function fvUpload(ev) {
   if (!files.length || !fvUnlocked || fvBusy) return;
   fvBusy = true;
   const prog = document.getElementById('fvProgress');
-  let ok = 0, fail = 0;
+  let ok = 0, fail = 0, skip = 0;
   try {
     let existing = {};
     try { (await fvListFiles()).forEach(f => { existing[f.name] = f.sha; }); } catch (err) {}
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
-      prog.textContent = '⏳ Шифрую и загружаю ' + (i + 1) + '/' + files.length + ': ' + f.name + '…';
+      prog.textContent = '⏳ Шифрую и загружаю ' + (i + 1) + '/' + files.length + ': ' + f.name + (f.size >= 1048576 ? ' (' + Math.round(f.size / 1048576) + ' МБ)' : '') + '…';
+      if (f.size > 30 * 1024 * 1024 && !confirm('Файл ' + f.name + ' — ' + Math.round(f.size / 1048576) + ' МБ. Такой большой файл на телефоне может не загрузиться (не хватит памяти), а на GitHub будет качаться долго. Продолжить?')) { skip++; continue; }
       try {
-        if (f.size > 25 * 1024 * 1024) throw new Error('файл больше 25 МБ — GitHub API не примет');
+        if (f.size > 90 * 1024 * 1024) throw new Error('файл больше 90 МБ — GitHub принимает файлы только до 100 МБ');
         const payload = await fvMakePayload(f);
         const body = { message: 'Kopilka: файл ' + f.name, content: ghB64(payload), branch: fvCfg().branch || 'main' };
         if (existing[f.name]) body.sha = existing[f.name];
@@ -2939,7 +2940,7 @@ async function fvUpload(ev) {
       }
     }
     prog.textContent = '';
-    if (ok) showToast('☁️ Загружено файлов: ' + ok + (fail ? ' · с ошибкой: ' + fail : ''));
+    if (ok || skip) showToast('☁️ Загружено файлов: ' + ok + (fail ? ' · с ошибкой: ' + fail : '') + (skip ? ' · пропущено: ' + skip : ''));
     await fvRender();
   } finally {
     fvBusy = false;
