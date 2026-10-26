@@ -400,7 +400,7 @@
   </div>
 
   <div class="card">
-    <h3>🎲 События курьерки</h3>
+    <h3 id="eventsTitle">🎲 События курьерки</h3>
     <div id="eventsList"></div>
     <div class="row" style="margin-top:10px">
       <select id="eventType">
@@ -424,11 +424,13 @@
         <input type="date" id="eventDeadline">
       </div>
     </div>
+    <div class="muted" id="eventEditHint" style="display:none;margin:8px 0 0 4px;color:#e67e22">✏️ Режим редактирования: меняй любые поля и жми «Сохранить изменения». Если поднять цель выше достигнутой — событие вернётся в работу; если продлить дедлайн просроченного — оживёт.</div>
     <div class="quick-btns">
-      <button onclick="addEvent()">🎯 Создать событие</button>
-      <button class="secondary" onclick="randomEvent()">🎲 Сгенерировать</button>
+      <button id="eventSaveBtn" onclick="addEvent()">🎯 Создать событие</button>
+      <button id="eventRandBtn" class="secondary" onclick="randomEvent()">🎲 Сгенерировать</button>
+      <button id="eventCancelBtn" class="ghost" onclick="cancelEditEvent()" style="display:none">✖ Отмена</button>
     </div>
-    <div class="muted" style="margin-top:6px">Как бонусы в курьерке: «доставь N заказов — получи приз». Прогресс считается по записям за период события — с даты «Действует с» по дедлайн включительно. Выполнил — конфетти и забирай бонус! Заказы вводи в форме «Добавить день» или впиши задним числом в столбик 🛵 таблицы «Все записи».</div>
+    <div class="muted" style="margin-top:6px">Как бонусы в курьерке: «доставь N заказов — получи приз». Прогресс считается по записям за период события — с даты «Действует с» по дедлайн включительно. Выполнил — конфетти и забирай бонус! Заказы вводи в форме «Добавить день» или впиши задним числом в столбик 🛵 таблицы «Все записи». Активное событие можно поправить кнопкой ✏️ на карточке или удалить 🗑 — записи смен при этом не трогаются.</div>
     <div id="eventsArchiveWrap" style="display:none;margin-top:12px">
       <button class="ghost" onclick="toggleArchive()" style="width:100%;margin-bottom:8px"><span id="archChevron">▸</span> 🏆 Архив событий (<span id="archCount">0</span>)</button>
       <div id="eventsArchiveList" style="display:none"></div>
@@ -1599,6 +1601,7 @@ function calcStreak(dates) {
 }
 // ============ СОБЫТИЯ КУРЬЕРКИ (КВЕСТЫ) ============
 function saveEvents() { localStorage.setItem(EVENTS_KEY, JSON.stringify(events)); }
+let editingEventId = null; // id события, которое сейчас правится в форме (null — форма в режиме создания)
 const EVENTS_ARCH_KEY = 'income_tracker_events_arch_v1';
 const EVENT_META = {
   orders: { icon: '🛵', one: 'заказ', few: 'заказа', gen: 'заказов', acc: 'доставлено' },
@@ -1639,6 +1642,21 @@ function addEvent() {
   const today = todayStr();
   const start = document.getElementById('eventStart').value || today;
   if (deadline && start > deadline) return alert('Дата «Действует с» не может быть позже дедлайна');
+  if (editingEventId) {
+    // Режим редактирования: обновляем поля существующего события, а не создаём новое
+    const ev = events.find(x => x.id === editingEventId);
+    if (!ev) { cancelEditEvent(); return showToast('🤔 Событие уже удалено — форма сброшена'); }
+    ev.type = type; ev.target = target; ev.reward = reward; ev.start = start; ev.deadline = deadline;
+    // Пересчёт статуса: цель подняли выше достигнутой — событие вернётся в работу;
+    // снизили до достигнутой — сразу выполнено (без повторного конфетти)
+    if (eventProgress(ev) >= ev.target) { if (!ev.done) { ev.done = true; ev.doneDate = today; } }
+    else { ev.done = false; ev.doneDate = null; }
+    saveEvents();
+    cancelEditEvent();
+    updateEvents();
+    showToast('✏️ Событие обновлено!');
+    return;
+  }
   events.push({ id: Date.now(), type, target, reward, deadline, start, createdAt: today, done: false, doneDate: null });
   saveEvents();
   document.getElementById('eventTarget').value = '';
@@ -1647,8 +1665,40 @@ function addEvent() {
   updateEvents();
   showToast('🎲 Событие создано! Погнали!');
 }
+// Включить режим редактирования: поля события — в форму, кнопки переключаются
+function startEditEvent(id) {
+  const ev = events.find(x => x.id === id);
+  if (!ev) return;
+  editingEventId = id;
+  document.getElementById('eventType').value = ev.type;
+  document.getElementById('eventTarget').value = ev.target;
+  document.getElementById('eventReward').value = ev.reward || '';
+  document.getElementById('eventStart').value = ev.start || todayStr();
+  document.getElementById('eventDeadline').value = ev.deadline || '';
+  document.getElementById('eventSaveBtn').textContent = '💾 Сохранить изменения';
+  document.getElementById('eventRandBtn').style.display = 'none';
+  document.getElementById('eventCancelBtn').style.display = '';
+  document.getElementById('eventEditHint').style.display = 'block';
+  document.getElementById('eventsTitle').textContent = '✏️ Редактирование события';
+  document.getElementById('eventType').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+// Выйти из режима редактирования и вернуть форму в режим создания
+function cancelEditEvent() {
+  editingEventId = null;
+  document.getElementById('eventTarget').value = '';
+  document.getElementById('eventReward').value = '';
+  document.getElementById('eventDeadline').value = '';
+  document.getElementById('eventSaveBtn').textContent = '🎯 Создать событие';
+  document.getElementById('eventRandBtn').style.display = '';
+  document.getElementById('eventCancelBtn').style.display = 'none';
+  document.getElementById('eventEditHint').style.display = 'none';
+  document.getElementById('eventsTitle').textContent = '🎲 События курьерки';
+  const es = document.getElementById('eventStart');
+  if (es) es.value = todayStr();
+}
 const RANDOM_REWARDS = ['бонус от платформы 🤑','шаурма за счёт победителя 🌯','энергетик + пельмени 🍜','пицца-вечеринка 🍕','новая игра в стиме 🎮','кино с попкорном 🍿','+500 ₽ в копилку 🐷','крутой десерт 🍰','день без готовки — доставка! 🛵','скидка на мечту 🎧'];
 function randomEvent() {
+  if (editingEventId) return showToast('Сначала сохрани или отмени редактирование (✖)');
   const today = todayStr();
   const earnEntries = entries.filter(e => !e.gift);
   const daysWorked = earnEntries.filter(e => e.hours > 0 || e.earned > 0).length;
@@ -1674,7 +1724,7 @@ function randomEvent() {
   showToast('🎲 Событие: ' + EVENT_META[type].icon + ' ' + fmt(target) + ' ' + plural(target, EVENT_META[type].one, EVENT_META[type].few, EVENT_META[type].gen) + ' за ' + dur + ' ' + daysWord(dur));
 }
 function deleteEvent(id) {
-  if (!confirm('Удалить событие?')) return;
+  if (!confirm('Удалить событие? Записи смен останутся — пропадёт только само событие и его прогресс.')) return;
   events = events.filter(ev => ev.id !== id);
   saveEvents();
   updateEvents();
@@ -1709,7 +1759,10 @@ function eventCard(ev, today, inArchive) {
     (!inArchive && ev.start ? '<div class="stat"><span style="opacity:.75">📅 Действует</span><b>с ' + shortDate(ev.start) + (ev.deadline ? ' по ' + shortDate(ev.deadline) + ' включительно' : ' (без срока)') + '</b></div>' : '') +
     (pace ? '<div class="stat"><span style="opacity:.75">📍 Чтобы успеть</span><b style="color:#e67e22">' + pace + '</b></div>' : '') +
     (inArchive ? '<div class="stat"><span style="opacity:.75">Период</span><b>' + dl + '</b></div>' : '') +
-    (inArchive ? '<div class="quick-btns"><button onclick="deleteEvent(' + ev.id + ')">🗑 Удалить</button></div>' : '');
+    '<div class="quick-btns" style="margin-bottom:0">' +
+    '<button class="secondary" onclick="startEditEvent(' + ev.id + ')">✏️ Изменить</button>' +
+    '<button class="' + (inArchive ? '' : 'ghost') + '" onclick="deleteEvent(' + ev.id + ')">🗑 Удалить</button>' +
+    '</div>';
   return card;
 }
 function toggleArchive() {
@@ -2303,7 +2356,7 @@ function importData(ev) {
       if (data.drops) drops = data.drops;
       if (data.games) games = data.games;
       if (data.wishes) wishes = data.wishes;
-      if (data.events) events = data.events;
+      if (data.events) { events = data.events; cancelEditEvent(); }
       saveIncome();
       saveFeeds();
       saveDrops();
@@ -2330,6 +2383,7 @@ function importData(ev) {
 function resetAll() {
   if (!confirm('Удалить ВСЕ записи (доход, корм, дропы, цели и события копилки)? Это необратимо.')) return;
   entries = []; feeds = []; drops = []; games = []; wishes = []; events = [];
+  cancelEditEvent();
   saveIncome(); saveFeeds(); saveDrops(); saveGames(); saveWishes(); saveEvents();
   localStorage.removeItem(ACH_SEEN_KEY);
   localStorage.removeItem(GOAL_CELEBRATED_KEY);
@@ -2453,7 +2507,7 @@ function vaultApplyData(data) {
   if (data.drops) drops = data.drops;
   if (data.games) games = data.games;
   if (data.wishes) wishes = data.wishes;
-  if (data.events) events = data.events;
+  if (data.events) { events = data.events; cancelEditEvent(); }
   saveIncome(); saveFeeds(); saveDrops(); saveGames(); saveWishes(); saveEvents();
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   document.getElementById('weeklyPlanInput').value = settings.weeklyPlan || 3500;
