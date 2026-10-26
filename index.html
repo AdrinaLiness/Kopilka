@@ -1,0 +1,3182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мой трекер</title>
+<!-- 🐷 Favicon: эмодзи монетки (SVG data-URI, без внешних файлов) -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%99%3C/text%3E%3C/svg%3E">
+<!-- 📲 PWA: установи на главный экран Android/iOS как приложение (Доход → 🔔 Напоминание → Установить) -->
+<meta name="theme-color" content="#2ecc71" id="metaThemeColor">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Копилка">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Копилка">
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22%D0%9A%D0%BE%D0%BF%D0%B8%D0%BB%D0%BA%D0%B0%20%E2%80%94%20%D0%BC%D0%BE%D0%B9%20%D1%82%D1%80%D0%B5%D0%BA%D0%B5%D1%80%22%2C%22short_name%22%3A%22%D0%9A%D0%BE%D0%BF%D0%B8%D0%BB%D0%BA%D0%B0%22%2C%22description%22%3A%22%D0%A2%D1%80%D0%B5%D0%BA%D0%B5%D1%80%20%D0%B4%D0%BE%D1%85%D0%BE%D0%B4%D0%BE%D0%B2%2C%20%D0%B7%D0%B0%D0%BA%D0%B0%D0%B7%D0%BE%D0%B2%2C%20%D0%BA%D0%BE%D1%80%D0%BC%D0%BE%D0%B2%2C%20%D0%B4%D1%80%D0%BE%D0%BF%D0%BE%D0%B2%20%D0%B8%20%D1%86%D0%B5%D0%BB%D0%B5%D0%B9%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22portrait%22%2C%22background_color%22%3A%22%23f0f2f5%22%2C%22theme_color%22%3A%22%232ecc71%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Crect%2520width%253D%2527512%2527%2520height%253D%2527512%2527%2520rx%253D%2527110%2527%2520fill%253D%2527%25232ecc71%2527%252F%253E%253Ctext%2520x%253D%2527256%2527%2520y%253D%2527350%2527%2520font-size%253D%2527290%2527%2520text-anchor%253D%2527middle%2527%253E%25F0%259F%2590%25B7%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%22%7D%2C%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520512%2520512%2527%253E%253Crect%2520width%253D%2527512%2527%2520height%253D%2527512%2527%2520rx%253D%2527110%2527%2520fill%253D%2527%25232ecc71%2527%252F%253E%253Ctext%2520x%253D%2527256%2527%2520y%253D%2527350%2527%2520font-size%253D%2527290%2527%2520text-anchor%253D%2527middle%2527%253E%25F0%259F%2590%25B7%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22maskable%22%7D%5D%7D">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f0f2f5; --card: #fff; --text: #1a1a1a; --muted: #888; --border: #eee;
+    --accent: #2ecc71; --accent2: #27ae60; --input-bg: #fff; --input-border: #ccc;
+    --table-head: #f7f7f7; --table-total: #f9f9f9;
+    --tab-bg: #e0e0e0; --tab-active: #fff; --tab-text: #555;
+  }
+  body.dark {
+    --bg: #121212; --card: #1e1e1e; --text: #e8e8e8; --muted: #999; --border: #333;
+    --input-bg: #2a2a2a; --input-border: #444; --table-head: #2a2a2a; --table-total: #252525;
+    --tab-bg: #2a2a2a; --tab-active: #1e1e1e; --tab-text: #aaa;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; max-width: 820px; margin: 0 auto; padding: 12px;
+         background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; }
+  h1 { font-size: 20px; margin: 8px 0; }
+  h3 { font-size: 16px; margin: 12px 0 8px; }
+  .card { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+  input, button, select, textarea { font-size: 16px; padding: 10px; border-radius: 8px;
+    border: 1px solid var(--input-border); width: 100%; margin-bottom: 8px;
+    background: var(--input-bg); color: var(--text); font-family: inherit; }
+  button { background: var(--accent); color: #fff; border: none; cursor: pointer; font-weight: 600; transition: transform 0.1s; }
+  button:active { transform: scale(0.98); background: var(--accent2); }
+  button.secondary { background: #3498db; }
+  button.danger { background: #e74c3c; }
+  button.ghost { background: transparent; color: var(--text); border: 1px solid var(--input-border); }
+  button.small { width: auto; padding: 6px 12px; font-size: 14px; margin: 0; }
+  .quick-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .quick-btns button { flex: 0 0 auto; font-size: 13px; padding: 6px 10px; background: #95a5a6; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 100px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 6px 4px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--table-head); font-weight: 600; }
+  .progress-bar { background: #e6e6e6; border-radius: 10px; overflow: hidden; height: 22px; margin: 8px 0; position: relative; }
+  .progress-fill { background: linear-gradient(90deg,#2ecc71,#27ae60); height: 100%; width: 0; transition: width 0.4s; }
+  .progress-fill.blue { background: linear-gradient(90deg,#3498db,#2980b9); }
+  .progress-fill.orange { background: linear-gradient(90deg,#f39c12,#e67e22); }
+  .progress-fill.red { background: linear-gradient(90deg,#e74c3c,#c0392b); }
+  .progress-text { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center;
+    justify-content: center; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+  .stat { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; border-bottom: 1px dashed var(--border); }
+  .stat b { color: var(--text); }
+  .stat:last-child { border-bottom: none; }
+  .del { color: #e74c3c; cursor: pointer; font-weight: 700; font-size: 18px; text-align: center; }
+  .badge { display: inline-block; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+  .badge.good { background: #d4edda; color: #155724; }
+  .badge.warn { background: #fff3cd; color: #856404; }
+  .badge.bad { background: #f8d7da; color: #721c24; }
+  .badge.info { background: #d1ecf1; color: #0c5460; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .header-row { display: flex; justify-content: space-between; align-items: center; }
+  .theme-toggle { background: transparent; border: none; font-size: 22px; cursor: pointer; width: auto; padding: 4px 8px; margin: 0; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--accent); color: #fff; padding: 12px 20px; border-radius: 8px;
+    font-weight: 600; opacity: 0; transition: all 0.3s; z-index: 999; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+  .modal-backdrop.show { display: flex; }
+  .modal-card { background: var(--card); border-radius: 14px; padding: 18px; max-width: 420px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
+  .chart-wrap { position: relative; height: 220px; }
+  .cat-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background: #e8f4f8; color: #2980b9; margin-right: 4px; }
+  body.dark .cat-tag { background: #1e3a4a; color: #7fc8e8; }
+  .cat-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .cat-filter button { width: auto; padding: 6px 12px; font-size: 13px; background: transparent; color: var(--text); border: 1px solid var(--input-border); }
+  .cat-filter button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ВКЛАДКИ */
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; background: var(--tab-bg); padding: 4px; border-radius: 10px; }
+  .tab { flex: 1; text-align: center; padding: 10px 6px; border-radius: 8px; cursor: pointer;
+         font-weight: 600; font-size: 14px; color: var(--tab-text); background: transparent;
+         border: none; transition: all 0.2s; margin: 0; }
+  .tab.active { background: var(--tab-active); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .tab:hover:not(.active) { color: var(--text); }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* КУРИЦА */
+  .chicken-visual { text-align: center; font-size: 64px; margin: 8px 0; line-height: 1; cursor: pointer; user-select: none; transition: transform 0.15s; }
+  .mini-btn { width: auto; min-width: 0; margin: 0; padding: 3px 12px; font-size: 14px; flex: 0 0 auto; }
+  .file-row { padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .file-row:last-child { border-bottom: none; }
+  .file-name { word-break: break-all; font-size: 14px; margin-bottom: 4px; }
+  .file-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chicken-visual.happy { animation: bounce 1.5s infinite; }
+  @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .chicken-visual.sad { filter: grayscale(0.6); }
+  .feed-status { text-align: center; font-size: 16px; font-weight: 700; margin: 8px 0; }
+  .feed-status.good { color: #27ae60; }
+  .feed-status.warn { color: #f39c12; }
+  .feed-status.bad { color: #e74c3c; }
+
+  .stat input.num-in { width: 110px; padding: 4px 8px; margin: 0; font-size: 14px; text-align: right; }
+
+  .check { display: flex; align-items: center; gap: 8px; font-size: 14px; margin: 2px 0 8px; cursor: pointer; user-select: none; }
+  .check input { width: auto; margin: 0; flex: 0 0 auto; transform: scale(1.25); }
+  .gift-tag { background: #fdf3d8; color: #a8780a; }
+  body.dark .gift-tag { background: #3a3020; color: #e8c96a; }
+  td input.orders-in { width: 64px; padding: 4px 6px; font-size: 13px; text-align: center; margin-bottom: 0; }
+  td input.orders-in:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* КОПИЛКА */
+  .piggy-visual { text-align: center; font-size: 64px; margin: 8px 0; line-height: 1; cursor: pointer; user-select: none; transition: transform 0.15s; }
+  .piggy-visual.happy { animation: bounce 1.5s infinite; }
+  .piggy-visual.sad { filter: grayscale(0.6); }
+  .emoji-picks { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .emoji-picks button { flex: 0 0 auto; width: auto; font-size: 20px; padding: 4px 10px;
+    background: transparent; color: var(--text); border: 1px solid var(--input-border); }
+  .ach-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ach-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px;
+    font-size: 12px; font-weight: 600; background: var(--table-head); border: 1px solid var(--border); color: var(--muted); }
+  .ach-chip.on { background: #d4edda; border-color: #2ecc71; color: #155724; }
+  body.dark .ach-chip.on { background: #1e3a24; color: #8fe3a2; }
+
+  details.month-block summary { cursor: pointer; font-weight: 600; font-size: 16px; list-style: none; user-select: none; display: flex; align-items: center; gap: 6px; }
+  details.month-block summary::-webkit-details-marker { display: none; }
+  details.month-block summary .arrow { display: inline-block; transition: transform 0.2s; color: var(--accent); font-size: 14px; }
+  details.month-block[open] summary .arrow { transform: rotate(90deg); }
+  .month-hint { font-weight: 400; font-size: 12px; }
+  details.month-block[open] .month-hint { display: none; }
+
+  /* Скрытая сумма бонусов — эффект спойлера, как в Telegram */
+  .tg-spoiler { position: relative; display: inline-block; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .tg-real { display: inline-block; filter: blur(7px); transition: filter .25s; user-select: none; -webkit-user-select: none; }
+  .tg-spoiler.revealed .tg-real { filter: none; user-select: text; -webkit-user-select: text; }
+  .tg-noise { position: absolute; inset: -3px -6px; overflow: hidden; pointer-events: none; transition: opacity .2s; }
+  .tg-spoiler.revealed .tg-noise { opacity: 0; }
+  .tg-noise i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: 0; animation: tgTwinkle 1.3s infinite; }
+  @keyframes tgTwinkle { 0%, 100% { opacity: 0; } 50% { opacity: .85; } }
+
+  @media (max-width: 500px) { table { font-size: 12px; } th, td { padding: 4px 2px; } .tab { font-size: 12px; padding: 8px 4px; } }
+</style>
+</head>
+<body>
+
+<div class="header-row">
+  <h1>📊 Мой трекер</h1>
+  <div style="display:flex;gap:2px;align-items:center">
+    <button class="theme-toggle" id="soundToggle" onclick="toggleSound()" title="Звук вкл/выкл">🔊</button>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Сменить тему">🌙</button>
+  </div>
+</div>
+
+<!-- ВКЛАДКИ -->
+<div class="tabs">
+  <button class="tab active" data-page="income" onclick="switchTab('income')">💰 Доход</button>
+  <button class="tab" data-page="piggy" onclick="switchTab('piggy')">🐷 Копилка</button>
+  <button class="tab" data-page="chicken" onclick="switchTab('chicken')">🐔 Корм</button>
+  <button class="tab" data-page="hours" onclick="switchTab('hours')">⏱ Накрутка</button>
+</div>
+
+<!-- ============ ЛИСТ 1: ДОХОД ============ -->
+<div class="page active" id="page-income">
+
+  <div class="card">
+    <h3>🎯 Цель</h3>
+    <div class="stat"><span>Накопить:</span><b><span id="incGoalSum">0</span> ₽</b></div>
+    <div class="stat"><span>Дедлайн:</span><b id="incGoalDate">—</b></div>
+    <button class="secondary" onclick="switchTab('piggy')">🐷 Изменить в Копилке</button>
+    <div class="muted" style="margin-top:6px">Цель одна — редактируется в Копилке, тут просто напоминалка.</div>
+  </div>
+
+  <div class="card">
+    <h3>➕ Добавить день</h3>
+    <div class="row">
+      <input type="date" id="date">
+      <input type="number" id="hours" placeholder="Часы" step="0.1" min="0">
+      <input type="number" id="earned" placeholder="Заработок ₽" step="1" min="0">
+      <input type="number" id="orders" placeholder="🛵 Заказы, шт" step="1" min="0">
+    </div>
+    <input type="text" id="category" list="categoryList" placeholder="Категория (напр. Курьер)" value="Курьер">
+    <datalist id="categoryList"></datalist>
+    <label class="check"><input type="checkbox" id="isGift" onchange="giftToggle(this.checked)"> 🎁 Подарок / разовая акция — не считать заработком</label>
+    <div class="quick-btns">
+      <button onclick="quickAdd('hours', 1)">+1 ч</button>
+      <button onclick="quickAdd('hours', 5)">+5 ч</button>
+      <button onclick="quickAdd('earned', 100)">+100 ₽</button>
+      <button onclick="quickAdd('earned', 500)">+500 ₽</button>
+      <button onclick="fillLastShift()">Как вчера</button>
+    </div>
+    <button onclick="addEntry()">Добавить</button>
+  </div>
+
+  <div class="card">
+    <h3 id="eventsTitle">🎲 События курьерки</h3>
+    <div id="eventsList"></div>
+    <div class="stat" style="margin-top:8px"><span>💼 Бонусы, если закрыть все события:</span><b><span id="eventPotential" class="tg-spoiler" onclick="eventPotentialToggle()" title="Скрыто, как спойлер в Telegram — нажми, чтобы показать"><span class="tg-real" id="eventPotentialSum">0 ₽</span><span class="tg-noise" id="eventPotentialNoise" aria-hidden="true"></span></span></b></div>
+    <div class="muted" id="eventPotentialDetail" style="margin:2px 0 0 4px">—</div>
+    <div class="row" style="margin-top:10px">
+      <select id="eventType">
+        <option value="orders">🛵 Доставить заказов</option>
+        <option value="hours">⏱ Наработать часов</option>
+        <option value="earned">💰 Заработать ₽</option>
+        <option value="shifts">📅 Отработать смен</option>
+      </select>
+      <input type="number" id="eventTarget" placeholder="Сколько" min="1" step="1">
+    </div>
+    <div class="row">
+      <input type="text" id="eventReward" placeholder="Бонус (напр. +1500 ₽, шаурма)">
+    </div>
+    <div class="row">
+      <div style="flex:1;min-width:0">
+        <div class="muted" style="font-size:11px;margin:0 0 2px 4px">Действует с</div>
+        <input type="date" id="eventStart">
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="muted" style="font-size:11px;margin:0 0 2px 4px">по (включительно)</div>
+        <input type="date" id="eventDeadline">
+      </div>
+    </div>
+    <div class="muted" id="eventEditHint" style="display:none;margin:8px 0 0 4px;color:#e67e22">✏️ Режим редактирования: меняй любые поля и жми «Сохранить изменения». Если поднять цель выше достигнутой — событие вернётся в работу; если продлить дедлайн просроченного — оживёт.</div>
+    <div class="quick-btns">
+      <button id="eventSaveBtn" onclick="addEvent()">🎯 Создать событие</button>
+      <button id="eventRandBtn" class="secondary" onclick="randomEvent()">🎲 Сгенерировать</button>
+      <button id="eventCancelBtn" class="ghost" onclick="cancelEditEvent()" style="display:none">✖ Отмена</button>
+    </div>
+    <div class="muted" style="margin-top:6px">Как бонусы в курьерке: «доставь N заказов — получи приз». Прогресс считается по записям за период события — с даты «Действует с» по дедлайн включительно. Выполнил — конфетти и забирай бонус! Заказы вводи в форме «Добавить день» или впиши задним числом в столбик 🛵 таблицы «Все записи». Активное событие можно поправить кнопкой ✏️ на карточке или удалить 🗑 — записи смен при этом не трогаются. Сумма бонусов сверху скрыта спойлером — тапни, чтобы раскрыть (и ещё раз, чтобы спрятать).</div>
+    <div id="eventsArchiveWrap" style="display:none;margin-top:12px">
+      <button class="ghost" onclick="toggleArchive()" style="width:100%;margin-bottom:8px"><span id="archChevron">▸</span> 🏆 Архив событий (<span id="archCount">0</span>)</button>
+      <div id="eventsArchiveList" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔔 Напоминание и 📲 приложение</h3>
+    <div class="row">
+      <button id="remindToggle" class="secondary" onclick="toggleReminder()">🔔 Включить</button>
+      <input type="time" id="remindTime" value="21:00" onchange="setRemindTime(this.value)" title="Во сколько напоминать">
+    </div>
+    <div class="stat"><span>Статус:</span><b id="remindStatus">—</b></div>
+    <div class="quick-btns">
+      <button onclick="testNotification()">🔔 Проверить уведомление</button>
+      <button id="installBtn" onclick="installApp()">📲 Установить на телефон</button>
+    </div>
+    <div class="muted" id="installStatus" style="margin-bottom:4px"></div>
+    <div class="muted">Напомню в выбранное время, если за сегодня ещё нет записи. Если Копилка была закрыта — напомню сразу при открытии.</div>
+  </div>
+
+  <div class="card">
+    <h3>📊 Общий прогресс</h3>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div><div class="progress-text" id="progressText">0%</div></div>
+    <div class="stat"><span>💰 В копилке (заработок + подарки):</span><b><span id="kopilkaTotal">0</span> ₽</b></div>
+    <div class="stat"><span>🚚 В пути (будущие записи):</span><b><span id="pendingSum">0</span> ₽</b></div>
+    <div class="stat"><span>Заработано (работа):</span><b><span id="totalEarned">0</span> ₽</b></div>
+    <div class="stat"><span>🛵 Заказов доставлено:</span><b><span id="totalOrders">0</span></b></div>
+    <div class="stat"><span>Осталось до цели:</span><b><span id="left">0</span> ₽</b></div>
+    <div class="stat"><span>Всего часов:</span><b><span id="totalHours">0</span></b></div>
+    <div class="stat"><span>Средняя ставка:</span><b><span id="avgRate">0</span> ₽/час</b></div>
+    <div class="stat"><span>Дней работал:</span><b><span id="daysWorked">0</span></b></div>
+    <div class="stat"><span>Средне в день:</span><b><span id="avgDayEarn">0</span> ₽</b></div>
+    <div class="stat"><span>🔥 Стрик (дней подряд):</span><b><span id="incStreak">0</span></b></div>
+    <div class="stat"><span>🎁 Подарки/акции (идут в копилку):</span><b><span id="giftTotalInline">0</span> ₽</b></div>
+  </div>
+
+  <div class="card">
+    <h3>📈 Динамика по дням</h3>
+    <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h3>📊 Тренд: эта неделя vs прошлая</h3>
+    <div class="stat"><span>Эта неделя:</span><b><span id="thisWeek">0</span> ₽</b></div>
+    <div class="stat"><span>Прошлая неделя:</span><b><span id="lastWeek">0</span> ₽</b></div>
+    <div class="stat"><span>Разница:</span><b><span id="weekDiff"></span></b></div>
+    <div class="stat"><span>Средняя смена:</span><b><span id="avgShift">0</span> ₽ / <span id="avgShiftHours">0</span> ч</b></div>
+  </div>
+
+  <div class="card">
+    <h3>🔮 Прогноз</h3>
+    <div class="stat"><span>Дней до дедлайна:</span><b><span id="daysLeft">0</span></b></div>
+    <div class="stat"><span>Нужно часов ещё:</span><b><span id="hoursNeeded">0</span></b></div>
+    <div class="stat"><span>Нужно часов в день:</span><b><span id="hoursPerDay">0</span></b></div>
+    <div class="stat"><span>Нужно часов в неделю:</span><b><span id="hoursPerWeek">0</span></b></div>
+    <div class="stat"><span>Нужно ₽ в день:</span><b><span id="rubPerDay">0</span></b></div>
+    <div class="stat"><span>Прогноз к дедлайну:</span><b><span id="forecast">0</span> ₽</b></div>
+    <div class="stat"><span>Статус:</span><b><span id="statusBadge"></span></b></div>
+  </div>
+
+  <div class="card">
+    <h3>🧮 Калькулятор дохода</h3>
+    <div class="muted" id="calcStatsLine" style="margin-bottom:8px">—</div>
+    <div class="row">
+      <div style="flex:1;min-width:0">
+        <div class="muted" style="font-size:11px;margin:0 0 2px 4px">Средняя смена, ₽</div>
+        <input type="number" id="calcAvgShift" step="10" min="0" oninput="calcRecalc()">
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="muted" style="font-size:11px;margin:0 0 2px 4px">Смен в неделю</div>
+        <input type="number" id="calcShiftsWeek" step="0.5" min="0" oninput="calcRecalc()">
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="muted" style="font-size:11px;margin:0 0 2px 4px">Часов в смене</div>
+        <input type="number" id="calcHoursShift" step="0.5" min="0" oninput="calcRecalc()">
+      </div>
+    </div>
+    <div class="stat"><span>📅 В неделю:</span><b><span id="calcWeek">0</span> ₽</b></div>
+    <div class="stat"><span>🗓 В месяц (в среднем):</span><b><span id="calcMonth">0</span> ₽</b></div>
+    <div class="stat"><span>📆 В год:</span><b><span id="calcYear">0</span> ₽</b></div>
+    <div class="stat"><span>⚡ Ставка:</span><b><span id="calcRate">0</span> ₽/час</b></div>
+    <div class="stat"><span>🛵 Заказов в месяц ≈:</span><b><span id="calcOrders">0</span></b></div>
+    <div class="stat"><span>📊 К недельному плану:</span><b id="calcPlanLine">—</b></div>
+    <div class="quick-btns" style="margin-top:8px">
+      <button class="secondary" onclick="calcReset()">↩️ Мои средние из истории</button>
+    </div>
+    <div class="muted" style="margin-top:6px">Калькулятор «что если»: подставил твою статистику за последние 30 дней — меняй любые числа и смотри прогноз. Смена = день с заработком или часами (подарки не считаются). Месяц = 52/12 недели. План недели берётся из блока «План/факт по неделям». Правки запоминаются, кнопка вернёт твои реальные средние.</div>
+  </div>
+
+  <div class="card">
+    <h3>📆 План по месяцам</h3>
+    <div class="muted" style="margin-bottom:8px">Сколько нужно зарабатывать каждый месяц, чтобы успеть к дедлайну.</div>
+    <table id="planTable">
+      <thead><tr><th>Месяц</th><th>Дней</th><th>План ₽</th><th>План часов</th><th>В день ч.</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>📅 План/факт по неделям</h3>
+    <div class="muted" style="margin-bottom:8px">
+      План на неделю: <input type="number" id="weeklyPlanInput" value="3500" style="width:80px;display:inline-block;padding:4px 8px;margin:0;font-size:14px" onchange="saveWeeklyPlan()"> ₽
+    </div>
+    <div class="progress-bar"><div class="progress-fill blue" id="weekProgressFill"></div><div class="progress-text" id="weekProgressText">0%</div></div>
+    <table id="weeklyTable">
+      <thead><tr><th>Неделя</th><th>Часы</th><th>Факт ₽</th><th>План ₽</th><th>Отклонение</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>⭐ Лучшие дни недели</h3>
+    <table id="bestDaysTable">
+      <thead><tr><th>День</th><th>Раз</th><th>Часов</th><th>Заработано</th><th>Средне/день</th><th>₽/час</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>🗂 Категории дохода</h3>
+    <table id="categoriesTable">
+      <thead><tr><th>Категория</th><th>Часы</th><th>Заработано</th><th>Доля</th><th>₽/час</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>🎁 Подарки и разовые акции</h3>
+    <div class="muted" style="margin-bottom:8px">Поступления подарком или по акции — не входят в заработок и рабочую статистику, но идут в копилку.</div>
+    <div class="stat"><span>Всего поступлений:</span><b><span id="giftCount">0</span></b></div>
+    <div class="stat"><span>Общая сумма:</span><b><span id="giftTotalCard">0</span> ₽</b></div>
+    <div class="stat"><span>Самый крупный:</span><b><span id="giftBest">—</span></b></div>
+    <table id="giftsTable">
+      <thead><tr><th>Дата</th><th>Что</th><th>₽</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <details class="month-block">
+      <summary><span class="arrow">▶</span> 📅 Заработок по месяцам <span class="month-hint muted">нажми, чтобы раскрыть список</span></summary>
+      <div class="muted" style="margin:10px 0 6px">Список обновляется сам: с последним днём месяца завершившийся месяц попадает в историю, а новый помечается «идёт». Также обновление происходит при каждом открытии файла.</div>
+      <table id="monthlyTable">
+        <thead><tr><th>Месяц</th><th>Дней</th><th>Часы</th><th>Заработок</th><th>В день</th><th>₽/час</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </details>
+  </div>
+
+  <div class="card">
+    <h3>📝 Все записи</h3>
+    <div class="cat-filter" id="catFilter"></div>
+    <table id="entriesTable">
+      <thead><tr><th>Дата</th><th>Кат.</th><th>Часы</th><th title="Заказы — можно вписать/изменить у любой записи">🛵</th><th>₽</th><th>₽/час</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>💾 Резервные копии</h3>
+    <button class="secondary" onclick="vaultBtn()">🔐 Зашифрованная резервная копия</button>
+    <button class="danger" onclick="resetAll()">Удалить все данные</button>
+    <div class="muted" style="margin-top:8px">Данные хранятся в браузере. Делай копии только через 🔐 зашифрованное хранилище — они защищены кодом, и их не прочитать без него.</div>
+  </div>
+
+  <div class="card" id="vaultCard" style="display:none">
+    <h3>🔐 Зашифрованная резервная копия</h3>
+    <div id="vaultSetup" style="display:none">
+      <div class="muted" style="margin-bottom:8px">Придумай код из 4 цифр — им зашифруются копии. Код нигде не хранится: без него копии не прочитать. Запиши код в надёжном месте!</div>
+      <input type="password" id="vaultPin1" inputmode="numeric" maxlength="4" placeholder="Код (4 цифры)" style="width:100%;margin-bottom:6px">
+      <input type="password" id="vaultPin2" inputmode="numeric" maxlength="4" placeholder="Повтори код" style="width:100%;margin-bottom:8px">
+      <button onclick="vaultCreate()">🔐 Создать хранилище</button>
+    </div>
+    <div id="vaultLocked" style="display:none">
+      <div class="muted" id="vaultLockedInfo" style="margin-bottom:8px">Зашифрованных копий: 0</div>
+      <input type="password" id="vaultPin" inputmode="numeric" maxlength="4" placeholder="Код из 4 цифр" style="width:100%;margin-bottom:8px">
+      <button onclick="vaultUnlock()">🔓 Открыть</button>
+    </div>
+    <div id="vaultOpen" style="display:none">
+      <div class="muted" style="margin-bottom:8px">Открыто. Сохранения зашифрованы кодом — скачанный файл без кода не прочитать.</div>
+      <div class="row">
+        <button onclick="vaultSnapshot()">💾 Сохранить копию</button>
+        <button class="secondary" onclick="vaultCloudSave()">☁️ Копия в GitHub</button>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <button class="secondary" onclick="document.getElementById('vaultImportFile').click()">📥 Загрузить файл</button>
+      </div>
+      <input type="file" id="vaultImportFile" accept=".json" style="display:none" onchange="vaultImport(event)">
+      <div id="vaultList" style="margin-top:8px"></div>
+      <div id="ghCloud" style="margin-top:10px"></div>
+      <div id="ghSetup" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--input-border)">
+        <div class="muted" style="margin-bottom:6px">Копии будут загружаться в <b>закрытый</b> репозиторий. Нужен токен: github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens → только этот репозиторий, право «Contents: Read and write». Файлы зашифрованы кодом — даже GitHub не прочитает их.</div>
+        <input type="text" id="ghUser" placeholder="Логин GitHub (напр. Kira0784)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="ghRepo" placeholder="Имя закрытого репозитория (напр. Kopilka-backup)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="ghBranch" placeholder="Ветка (обычно main)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="ghDir" placeholder="Папка в репозитории (напр. kopilka-backups)" style="width:100%;margin-bottom:6px">
+        <input type="password" id="ghToken" placeholder="Токен (github_pat_… или ghp_…)" style="width:100%;margin-bottom:8px">
+        <div class="row">
+          <button onclick="ghSaveSetup()">💾 Сохранить и проверить</button>
+          <button class="ghost" onclick="ghCloseSetup()">Отмена</button>
+        </div>
+        <div class="muted" id="ghSetupMsg" style="margin-top:6px"></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="ghost" onclick="vaultLock()">🔒 Закрыть</button>
+        <button class="ghost" onclick="vaultChangePin()">🔁 Сменить код</button>
+        <button class="ghost" onclick="vaultRemove()">❌ Удалить хранилище</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-income -->
+
+<!-- ============ ЛИСТ 5: КОПИЛКА ============ -->
+<div class="page" id="page-piggy">
+
+  <div class="card">
+    <h3>🏁 Главная цель</h3>
+    <div class="progress-bar"><div class="progress-fill" id="piggyGoalFill"></div><div class="progress-text" id="piggyGoalText">0%</div></div>
+    <div class="stat"><span>Цель:</span><b><span id="piggyGoalTotal">0</span> ₽</b></div>
+    <div class="stat"><span>Накоплено (вся копилка):</span><b><span id="piggyGoalHave">0</span> ₽</b></div>
+    <div class="stat"><span>Осталось:</span><b><span id="piggyGoalLeft">0</span> ₽</b></div>
+    <div class="stat"><span>До дедлайна:</span><b><span id="piggyGoalDays">—</span></b></div>
+    <div class="row" style="margin-top:8px">
+      <input type="number" id="piggyGoalInput" placeholder="Главная цель, ₽">
+      <input type="date" id="piggyDeadlineInput">
+    </div>
+    <button class="secondary" onclick="saveGoalFromPiggy()">Сохранить главную цель</button>
+    <div class="muted" style="margin-top:6px">Это твоя большая цель — к ней копилка движется всем, что в ней есть (работа + подарки). Цели ниже — конкретные вещи, на которые ты распределяешь свободные деньги. Полный прогноз и план по месяцам — во вкладке «Доход».</div>
+  </div>
+
+  <div class="card">
+    <h3>🎮 Уровень копителя</h3>
+    <div class="piggy-visual" id="levelIcon" style="font-size:48px">🥚</div>
+    <div class="feed-status" id="levelName">—</div>
+    <div class="progress-bar"><div class="progress-fill" id="levelFill"></div><div class="progress-text" id="levelText">0%</div></div>
+    <div class="stat"><span>Следующий уровень:</span><b><span id="levelNext">—</span></b></div>
+    <div class="stat"><span>🔥 Стрик (дней подряд):</span><b><span id="streakNow">0</span> · рекорд: <span id="streakBest">0</span></b></div>
+    <div style="margin-top:8px;font-size:13px"><b>💬 Мотивация дня:</b> <span id="dailyPhrase">—</span></div>
+    <div class="muted" style="margin-top:6px">Уровень растёт от всей копилки. Стрик = сколько дней подряд ты записывал смены. Заходи каждый день и не рви цепочку!</div>
+  </div>
+
+  <div class="card">
+    <h3>🐷 Баланс копилки</h3>
+    <div class="piggy-visual" id="piggyEmoji" onclick="pokePiggy()" title="Тык! 🐷">🐷</div>
+    <div class="feed-status" id="piggyStatus">—</div>
+    <div class="muted" id="piggyStage" style="text-align:center;margin-top:2px">—</div>
+    <div class="progress-bar"><div class="progress-fill orange" id="kopAllocFill"></div><div class="progress-text" id="kopAllocText">0%</div></div>
+    <div class="stat"><span>Всего в копилке (работа + подарки):</span><b><span id="kopBalance">0</span> ₽</b></div>
+    <div class="stat"><span>🚚 В пути (упадёт в свой день):</span><b><span id="kopPending">0</span> ₽</b></div>
+    <div class="stat"><span>Отложено на цели:</span><b><span id="kopAllocated">0</span> ₽</b></div>
+    <div class="stat"><span>Потрачено на цели:</span><b><span id="kopSpent">0</span> ₽</b></div>
+    <div class="stat"><span>Свободно:</span><b><span id="kopFree">0</span> ₽</b></div>
+    <div class="stat"><span>Темп накопления:</span><b><span id="kopPace">0</span> ₽/мес</b></div>
+    <div class="muted" style="margin-top:6px">Копилка наполняется сама: весь заработок и подарки попадают сюда. Свободные деньги откладывай на конкретные цели ниже — так они не потратятся зря.</div>
+  </div>
+
+  <div class="card">
+    <h3>➕ Новая цель</h3>
+    <div class="emoji-picks" id="emojiPicks"></div>
+    <div class="row">
+      <input type="text" id="wishEmoji" placeholder="Эмодзи (или жми выше)" maxlength="4">
+      <input type="text" id="wishName" placeholder="Название (напр. Наушники)">
+    </div>
+    <input type="number" id="wishPrice" placeholder="Цена, ₽" step="1" min="0">
+    <button onclick="addWish()">Добавить цель</button>
+  </div>
+
+  <div id="wishesList"></div>
+
+  <div class="card">
+    <h3>🏅 Ачивки (<span id="achCount">0 / 10</span>)</h3>
+    <div class="ach-grid" id="achGrid"></div>
+  </div>
+
+  <div class="card">
+    <h3>💡 Советы студенту</h3>
+    <div class="stat"><span>🎯 Правило 24 часов:</span><b>захотел купить — подожди день</b></div>
+    <div class="stat"><span>🐷 Сначала отложи:</span><b>зарплата → копилка → остаток тратим</b></div>
+    <div class="stat"><span>🎁 Подарки не тратят:</span><b>всё подаренное — сразу в копилку</b></div>
+    <div class="stat"><span>🍳 Еда из дома:</span><b>экономит ~2000 ₽/мес</b></div>
+    <div class="stat"><span>🔍 Студ. скидки:</span><b>спрашивай везде, бывает до −50%</b></div>
+    <div class="muted" style="margin-top:6px">Лайфхак: цена цели в часах работы — умножь часы на свою ставку. Если жалко часов — не жалко и денег потратить.</div>
+  </div>
+
+</div><!-- /page-piggy -->
+
+<!-- ============ ЛИСТ 2: КОРМ ============ -->
+<div class="page" id="page-chicken">
+
+  <div class="card">
+    <h3>🐔 Статус курицы</h3>
+    <div class="chicken-visual" id="chickenEmoji" onclick="pokeChicken()" title="Тык! 🐔">🐔</div>
+    <div class="feed-status" id="feedStatus">—</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="feedProgressFill"></div>
+      <div class="progress-text" id="feedProgressText">0%</div>
+    </div>
+    <div class="stat"><span>Корм выдан:</span><b><span id="feedGivenDate">—</span></b></div>
+    <div class="stat"><span>Корм закончится:</span><b><span id="feedEndDate">—</span></b></div>
+    <div class="stat"><span>Осталось дней:</span><b><span id="feedDaysLeft">—</span></b></div>
+    <div class="stat"><span>Осталось недель:</span><b><span id="feedWeeksLeft">—</span></b></div>
+  </div>
+
+  <div class="card">
+    <h3>🍗 Выдать корм</h3>
+    <div class="row">
+      <input type="date" id="feedDate">
+      <button onclick="giveFeed()">Выдал корм сегодня</button>
+    </div>
+    <div class="muted">Один корм = 3 недели (21 день) жизни курицы.</div>
+  </div>
+
+  <div class="card">
+    <h3>📋 История корма</h3>
+    <table id="feedHistoryTable">
+      <thead><tr><th>Дата</th><th>Действует до</th><th>Дней</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>📊 Статистика</h3>
+    <div class="stat"><span>Всего выдано корма:</span><b><span id="totalFeeds">0</span></b></div>
+    <div class="stat"><span>Всего дней покрыто:</span><b><span id="totalFeedDays">0</span></b></div>
+    <div class="stat"><span>Курица прожила (с первого корма):</span><b><span id="chickenAge">0</span> дн.</b></div>
+    <div class="stat"><span>Максимум жизни курицы:</span><b>~140 дн. (20 нед.)</b></div>
+  </div>
+
+  <!-- 🗂 СЕКРЕТНАЯ ПАПКА (файлы) — вход по ключу шифрования -->
+  <div class="card" style="border:1px dashed var(--input-border)">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <h3 style="margin:0">🗂 Секретная папка</h3>
+      <button class="ghost mini-btn" onclick="fvToggle()" title="Открыть Секретную папку">🔐</button>
+    </div>
+    <div id="fvGate" style="display:none;margin-top:8px">
+      <div class="muted" style="margin-bottom:6px">Чтобы попасть в Секретную папку, введи ключ шифрования. Он показывается в секретном меню: тапни по курице 🐔 4 раза — меню появится внизу вкладки «Накрутка».</div>
+      <input type="password" id="fvKeyInput" placeholder="Ключ шифрования" style="width:100%;margin-bottom:8px" autocomplete="off">
+      <button onclick="fvUnlock()">🔓 Открыть папку</button>
+    </div>
+    <div id="fvPanel" style="display:none;margin-top:8px">
+      <div class="muted" style="margin-bottom:8px">Здесь лежат <b>любые файлы</b>: txt, word, фото, видео и т.д. Каждый файл шифруется твоим ключом перед загрузкой — на GitHub он попадает уже зашифрованным. Один файл — до 90 МБ (жёсткий лимит GitHub — 100 МБ на файл, больше он не хранит вообще, так что видео на сотни МБ сначала сожми).</div>
+      <div id="fvSetup" style="display:none">
+        <div class="muted" style="margin-bottom:6px">Файлы будут загружаться в <b>закрытый</b> репозиторий GitHub. Заведи для них новый (как Kopilka-backup, только Private): в токене должно быть право доступа и к этому репозиторию — «Contents: Read and write».</div>
+        <input type="text" id="fvUser" placeholder="Логин GitHub (напр. Kira0784)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="fvRepo" placeholder="Имя закрытого репозитория (напр. Kopilka-files)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="fvBranch" placeholder="Ветка (обычно main)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="fvDir" placeholder="Папка в репозитории (напр. secret-files)" style="width:100%;margin-bottom:6px">
+        <input type="password" id="fvToken" placeholder="Токен (github_pat_… или ghp_…)" style="width:100%;margin-bottom:8px">
+        <div class="row">
+          <button onclick="fvSaveSetup()">💾 Сохранить и проверить</button>
+          <button class="ghost" onclick="fvCloseSetup()">Отмена</button>
+        </div>
+        <div class="muted" id="fvSetupMsg" style="margin-top:6px"></div>
+      </div>
+      <div id="fvMain" style="display:none">
+        <div class="muted fv-status" style="margin:0 0 6px"></div>
+        <input type="file" id="fvFileInput" multiple style="display:none" onchange="fvUpload(event)">
+        <div class="row" style="margin-bottom:6px">
+          <button onclick="document.getElementById('fvFileInput').click()">➕ Добавить файлы</button>
+        </div>
+        <div class="row">
+          <button class="ghost" onclick="fvRefresh()">🔄 Обновить</button>
+          <button class="ghost" onclick="fvOpenSetup()">⚙️ Настройки</button>
+          <button class="ghost" onclick="fvDisconnect()">✖ Отключить</button>
+        </div>
+        <div class="muted" id="fvProgress" style="margin:6px 0"></div>
+        <div id="fvList" style="margin-top:4px"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-chicken -->
+
+
+
+<!-- ============ ЛИСТ 4: НАКРУТКА ЧАСОВ ============ -->
+<div class="page" id="page-hours">
+
+  <div class="card">
+    <h3>⚠️ ВНИМАНИЕ</h3>
+    <div class="stat"><span>Часы в Steam</span><b>= реальные + накрученные</b></div>
+    <div class="muted" style="margin-top:6px">Добавь игру, укажи реальные часы и сколько нужно накрутить. Отметь, сколько уже накручено, а дальше просто жми кнопки после каждой сессии.</div>
+  </div>
+
+  <div class="card">
+    <h3>🎮 Добавить игру</h3>
+    <input type="text" id="gameName" placeholder="Название игры (напр. War Thunder)">
+    <div class="row">
+      <input type="number" id="gameReal" placeholder="Реальные часы" step="0.1" min="0">
+      <input type="number" id="gameTarget" placeholder="Нужно накрутить, ч" step="0.1" min="0">
+    </div>
+    <input type="number" id="gameGrinded" placeholder="Уже накручено, ч (можно оставить пустым)" step="0.1" min="0">
+    <button onclick="addGame()">Добавить игру</button>
+  </div>
+
+  <div class="card">
+    <h3>📊 Общий прогресс накрутки</h3>
+    <div class="progress-bar"><div class="progress-fill" id="grindTotalFill"></div><div class="progress-text" id="grindTotalText">0%</div></div>
+    <div class="stat"><span>Игр:</span><b><span id="grindGamesCount">0</span></b></div>
+    <div class="stat"><span>План накрутки:</span><b><span id="grindPlanTotal">0</span> ч</b></div>
+    <div class="stat"><span>Накручено:</span><b><span id="grindDoneTotal">0</span> ч</b></div>
+    <div class="stat"><span>Осталось:</span><b><span id="grindLeftTotal">0</span> ч</b></div>
+    <div class="stat"><span>Суммарно часов в Steam:</span><b><span id="grindSteamTotal">0</span> ч</b></div>
+  </div>
+
+  <div id="gamesList"></div>
+
+  <!-- 🗝 Секретное меню — открывается 4 тапами по курице -->
+  <div class="card" id="secretMenuCard" style="display:none">
+    <h3>🗝 Секретное меню</h3>
+    <div class="muted" style="margin-bottom:8px">Это ключ шифрования для <b>Секретной папки</b> (вкладка «Корм» — кнопка 🔐). Введи его там, чтобы открыть папку. <b>Запиши ключ в надёжное место</b> — без него зашифрованные файлы не прочитать!</div>
+    <div id="secretKeyBox" style="font-family:monospace;font-size:16px;font-weight:700;letter-spacing:1px;text-align:center;padding:10px;background:var(--table-head);border-radius:8px;margin-bottom:8px;word-break:break-all">••••-••••-••••-••••-••••</div>
+    <div class="row">
+      <button class="secondary" id="secretKeyToggleBtn" onclick="secretKeyToggle()">👁 Показать</button>
+      <button class="secondary" onclick="secretKeyCopy()">📋 Скопировать</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button class="ghost" onclick="secretKeyCustom()">✏️ Ввести свой ключ</button>
+    </div>
+    <div class="muted" style="margin-top:8px">Это меню открывается 4 тапами по курице 🐔 во вкладке «Корм».</div>
+  </div>
+
+</div><!-- /page-hours -->
+
+<!-- 📲 Модалка установки на телефон -->
+<div class="modal-backdrop" id="installModal" onclick="installModalBackdropClick(event)">
+  <div class="modal-card">
+    <h3 style="margin-top:0">📲 Установить Копилку как приложение</h3>
+    <p style="font-size:14px;margin:8px 0 2px"><b>Android (Chrome):</b></p>
+    <ol style="font-size:14px;margin:2px 0 8px;padding-left:22px">
+      <li>Меню <b>⋮</b> справа вверху</li>
+      <li>«<b>Добавить на главный экран</b>» / «Установить приложение»</li>
+      <li>Подтверди — иконка 🐷 появится на рабочем столе</li>
+    </ol>
+    <p style="font-size:14px;margin:8px 0 2px"><b>iPhone (Safari):</b> «Поделиться» → «На экран „Домой“».</p>
+    <div class="muted" style="margin-top:8px">На сайте рядом с index.html должен лежать файл <b>sw.js</b> — он включает кнопку «Установить приложение» и офлайн-режим.</div>
+    <div class="muted" style="margin-top:6px">Нет своего сайта? Перетащи оба файла в папке на <b>netlify.com/drop</b> — получишь ссылку и сможешь установить приложение.</div>
+    <div class="muted" style="margin-top:6px">«Приложение» — это тот же файл: любые обновления index.html сразу появляются и на сайте, и в приложении. Данные хранятся в браузере телефона и никуда не пропадают.</div>
+    <button class="secondary" onclick="closeInstallHelp()" style="margin-top:12px">Понятно 👍</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ СОСТОЯНИЕ ============
+const STORAGE_KEY = 'income_tracker_v2';
+const SETTINGS_KEY = 'income_tracker_settings_v2';
+const FEED_KEY = 'income_tracker_feed_v1';
+const DROPS_KEY = 'income_tracker_drops_v1';
+const GAMES_KEY = 'income_tracker_games_v1';
+const WISHES_KEY = 'income_tracker_wishes_v1';
+const EVENTS_KEY = 'income_tracker_events_v1';
+const ACH_SEEN_KEY = 'income_tracker_ach_seen_v1';
+const GOAL_CELEBRATED_KEY = 'income_tracker_goal_celebrated_v1';
+const LEVEL_SEEN_KEY = 'income_tracker_level_seen_v1';
+const SOUND_KEY = 'income_tracker_sound';
+const THEME_KEY = 'income_tracker_theme';
+const ACTIVE_TAB_KEY = 'income_tracker_tab';
+
+let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{"goal":100000,"deadline":"2027-03-07","weeklyPlan":3500}');
+let feeds = JSON.parse(localStorage.getItem(FEED_KEY) || '[]');      // [{id, date, endDate}]
+let drops = JSON.parse(localStorage.getItem(DROPS_KEY) || '[]');     // [{id, date, name, price, source}]
+let games = JSON.parse(localStorage.getItem(GAMES_KEY) || '[]');      // [{id, name, real, target, grinded}]
+let wishes = JSON.parse(localStorage.getItem(WISHES_KEY) || '[]');    // [{id, emoji, name, price, saved, bought, boughtDate, createdAt}]
+let events = JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]');     // [{id, type, target, reward, deadline, start, done, doneDate}]
+let chart = null;
+let activeCategory = 'all';
+
+// ============ УТИЛИТЫ ============
+function fmt(n) { return Math.round(n).toLocaleString('ru-RU'); }
+function fmtF(n, d=2) { return n.toLocaleString('ru-RU', {minimumFractionDigits: d, maximumFractionDigits: d}); }
+function plural(n, one, few, many) {
+  const m10 = Math.abs(n) % 10, m100 = Math.abs(n) % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+function hoursWord(n) { return plural(Math.round(n), 'час', 'часа', 'часов'); }
+function daysWord(n) { return plural(Math.round(n), 'день', 'дня', 'дней'); }
+function weeksWord(n) { return plural(Math.round(n), 'неделя', 'недели', 'недель'); }
+function localDateStr(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); } // локальная дата: toISOString даёт UTC и из-за пояса сдвигал «сегодня» на вчера
+function todayStr() { return localDateStr(new Date()); } // «сегодня» — для фильтра копилки по дате получения
+
+function saveIncome() { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
+function saveFeeds() { localStorage.setItem(FEED_KEY, JSON.stringify(feeds)); }
+function saveDrops() { localStorage.setItem(DROPS_KEY, JSON.stringify(drops)); }
+function saveGames() { localStorage.setItem(GAMES_KEY, JSON.stringify(games)); }
+function saveWeeklyPlan() {
+  settings.weeklyPlan = parseFloat(document.getElementById('weeklyPlanInput').value) || 3500;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  renderIncome();
+}
+function toggleTheme() {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+  document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+  applyThemeColor();
+  if (chart) updateChart();
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============ ВКЛАДКИ ============
+function switchTab(name) {
+  if (!document.getElementById('page-' + name)) name = 'income'; // старая сохранённая вкладка (drops/server)
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelector('.tab[data-page="' + name + '"]').classList.add('active');
+  localStorage.setItem(ACTIVE_TAB_KEY, name);
+  if (name === 'income' && chart) setTimeout(() => chart.resize(), 50);
+  if (name === 'income') renderIncome();
+  if (name === 'piggy') renderPiggy();
+  if (name === 'chicken') renderChicken();
+  if (name === 'hours') renderHours();
+}
+
+// ============ ДОХОД (как было) ============
+function quickAdd(field, val) {
+  const el = document.getElementById(field);
+  el.value = (parseFloat(el.value) || 0) + val;
+}
+function giftToggle(on) {
+  const cat = document.getElementById('category');
+  if (on && (cat.value === 'Курьер' || cat.value === '')) cat.value = 'Подарок';
+  if (!on && cat.value === 'Подарок') cat.value = 'Курьер';
+}
+function fillLastShift() {
+  if (entries.length === 0) return;
+  const last = entries[entries.length - 1];
+  document.getElementById('hours').value = last.hours;
+  document.getElementById('earned').value = last.earned;
+  document.getElementById('orders').value = last.orders || '';
+  document.getElementById('category').value = last.category || 'Курьер';
+  document.getElementById('isGift').checked = false;
+}
+function addEntry() {
+  const date = document.getElementById('date').value;
+  const hours = parseFloat(document.getElementById('hours').value) || 0;
+  const earned = parseFloat(document.getElementById('earned').value) || 0;
+  const orders = parseInt(document.getElementById('orders').value, 10) || 0;
+  const isGift = document.getElementById('isGift').checked;
+  let category = (document.getElementById('category').value || '').trim();
+  if (isGift && !category) category = 'Подарок';
+  if (!isGift && !category) category = 'Без категории';
+  if (!date) return alert('Укажи дату');
+  if (hours < 0 || earned < 0) return alert('Значения не могут быть отрицательными');
+  if (hours === 0 && earned === 0) return alert('Введи часы или заработок');
+  if (isGift && earned === 0) return alert('Укажи сумму подарка/акции');
+
+  const earnList = entries.filter(e => !e.gift);
+  const wasRecord = !isGift && earnList.length > 0 && earned > Math.max(...earnList.map(e => e.earned));
+  const kopBefore = entries.reduce((s,e) => (e.date <= todayStr() ? s + e.earned : s), 0);
+  entries.push({ id: Date.now(), date, hours, earned, orders: orders || undefined, category, gift: isGift, createdAt: Date.now() });
+  saveIncome();
+  document.getElementById('hours').value = '';
+  document.getElementById('earned').value = '';
+  document.getElementById('orders').value = '';
+  document.getElementById('isGift').checked = false;
+  renderIncome();
+  updateEvents();
+  playCoin();
+  renderRemind();
+  const kopAfter = entries.reduce((s,e) => (e.date <= todayStr() ? s + e.earned : s), 0);
+  if (kopAfter >= settings.goal && kopBefore < settings.goal) { confettiBurst(240); showToast('🎉 ЦЕЛЬ ДОСТИГНУТА! В копилке ' + fmt(kopAfter) + ' ₽'); }
+  else if (date > todayStr()) showToast('🚚 Записано ' + fmt(earned) + ' ₽ — упадёт в копилку ' + date);
+  else if (isGift) showToast('🎁 Подарок записан и пошёл в копилку');
+  else if (wasRecord && earned > 0) showToast('🏆 Новый рекорд: ' + fmt(earned) + ' ₽!');
+}
+function removeEntry(id) {
+  if (!confirm('Удалить запись?')) return;
+  entries = entries.filter(e => e.id !== id);
+  saveIncome();
+  renderIncome();
+  updateEvents();
+}
+const ORDERS_EDIT_WINDOW = 48 * 60 * 60 * 1000; // новые записи: правка заказов открыта 48 часов
+function canEditOrders(e) {
+  if (e.ordersLocked) return false;
+  if (e.createdAt) return (Date.now() - e.createdAt) < ORDERS_EDIT_WINDOW;
+  return !e.ordersEdited; // старые записи (до обновления): одна правка — потом блок навсегда
+}
+function setOrders(id, val) {
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+  if (!canEditOrders(e)) {
+    showToast('🔒 Срок правки заказов истёк — поле заблокировано');
+    renderIncome();
+    return;
+  }
+  const n = Math.max(0, parseInt(val, 10) || 0);
+  if (!e.createdAt && !e.ordersEdited) {
+    if (!confirm('Старую запись можно исправить только ОДИН раз — после сохранения заказы заблокируются навсегда. Ставим ' + n + '?')) { renderIncome(); return; }
+  }
+  e.orders = n > 0 ? n : undefined;
+  if (!e.createdAt) e.ordersEdited = true;
+  saveIncome();
+  renderIncome();
+  updateEvents();
+  showToast(canEditOrders(e) ? '🛵 Заказы обновлены: ' + n : '🛵 Заказы: ' + n + ' 🔒 запись закрыта');
+}
+function setCategoryFilter(cat) { activeCategory = cat; renderIncome(); }
+
+function monthKey(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const m = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  return m[d.getMonth()] + '.' + String(d.getFullYear()).slice(-2);
+}
+function getWeekStart(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() - day + 1);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function weekKey(dateStr) {
+  const start = getWeekStart(dateStr);
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  const f = x => String(x.getDate()).padStart(2,'0') + '.' + String(x.getMonth()+1).padStart(2,'0');
+  return f(start) + '–' + f(end);
+}
+function daysBetween(a, b) {
+  const d1 = new Date(a + 'T00:00:00'), d2 = new Date(b + 'T00:00:00');
+  return Math.round((d2 - d1) / 86400000);
+}
+const WEEKDAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+function dayOfWeek(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return WEEKDAYS[(d.getDay() || 7) - 1];
+}
+
+function updateChart() {
+  const byDay = {};
+  entries.filter(e => !e.gift).forEach(e => { byDay[e.date] = (byDay[e.date] || 0) + e.earned; });
+  const dates = Object.keys(byDay).sort();
+  const values = dates.map(d => byDay[d]);
+  let acc = 0;
+  const cumulative = values.map(v => (acc += v));
+  const isDark = document.body.classList.contains('dark');
+  const textColor = isDark ? '#e8e8e8' : '#333';
+  const gridColor = isDark ? '#333' : '#eee';
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('dailyChart'), {
+    type: 'line',
+    data: {
+      labels: dates.map(d => d.slice(5)),
+      datasets: [
+        { label: 'Накоплено', data: cumulative, borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.15)',
+          fill: true, tension: 0.3, pointRadius: 2 },
+        { label: 'За день', data: values, borderColor: '#3498db', backgroundColor: 'transparent',
+          tension: 0.3, pointRadius: 2, borderDash: [4,4] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } },
+        y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
+      }
+    }
+  });
+}
+
+function renderIncome() {
+  entries.sort((a,b) => a.date.localeCompare(b.date));
+  const today = todayStr();
+
+  // Копилка учитывает только «полученные» деньги: дата записи <= сегодня.
+  // Будущие записи — «в пути»: видны в списке, но в копилку упадут в свой день.
+  const earnEntries = entries.filter(e => !e.gift && e.date <= today);
+  const giftEntries = entries.filter(e => e.gift && e.date <= today);
+  const pendingSum = entries.filter(e => e.date > today).reduce((s,e) => s + e.earned, 0);
+  const cats = [...new Set(earnEntries.map(e => e.category || 'Без категории'))].sort();
+  const filterBox = document.getElementById('catFilter');
+  filterBox.innerHTML = `<button class="${activeCategory==='all'?'active':''}" onclick="setCategoryFilter('all')">Все</button>`;
+  cats.forEach(c => {
+    filterBox.innerHTML += `<button class="${activeCategory===c?'active':''}" onclick="setCategoryFilter('${c.replace(/'/g,"\\'")}')">${c}</button>`;
+  });
+
+  const filtered = activeCategory === 'all' ? entries : entries.filter(e => (e.category||'Без категории') === activeCategory);
+  const tbody = document.querySelector('#entriesTable tbody');
+  tbody.innerHTML = '';
+  filtered.slice().reverse().forEach(e => {
+    const rate = e.hours > 0 ? fmtF(e.earned / e.hours) : '—';
+    const tr = document.createElement('tr');
+    if (e.date > today) { tr.style.opacity = '0.65'; tr.title = '🚚 Запись на будущую дату — деньги упадут в копилку ' + e.date; }
+    if (e.gift) {
+      tr.style.opacity = '0.8';
+      tr.innerHTML = `<td>${e.date}</td><td><span class="cat-tag gift-tag">🎁 ${e.category||'Подарок'}</span></td>
+        <td>${e.hours}</td><td>—</td><td>+${fmt(e.earned)}</td><td>—</td>
+        <td><span class="del" onclick="removeEntry(${e.id})">×</span></td>`;
+    } else {
+      const canEd = canEditOrders(e);
+      const ordersCell = canEd
+        ? `<input type="number" class="orders-in" min="0" step="1" value="${e.orders || ''}" placeholder="0" title="${e.createdAt ? 'Заказы — правка открыта 48 ч с момента записи' : 'Заказы — одна правка, потом навсегда 🔒'}" onchange="setOrders(${e.id}, this.value)">`
+        : `<input type="number" class="orders-in" disabled value="${e.orders || 0}" title="🔒 Заказы заблокированы (48 ч прошли или правка уже использована)">`;
+      tr.innerHTML = `<td>${e.date}</td><td><span class="cat-tag">${e.category||'—'}</span></td>
+        <td>${e.hours}</td><td>${ordersCell}</td><td>${fmt(e.earned)}</td><td>${rate}</td>
+        <td><span class="del" onclick="removeEntry(${e.id})">×</span></td>`;
+    }
+    tbody.appendChild(tr);
+  });
+  if (filtered.length === 0) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888">Нет данных</td></tr>';
+
+  const totalEarned = earnEntries.reduce((s,e) => s + e.earned, 0);
+  const totalHours = earnEntries.reduce((s,e) => s + e.hours, 0);
+  const avgRate = totalHours > 0 ? totalEarned / totalHours : 0;
+  const daysWorked = earnEntries.filter(e => e.hours > 0 || e.earned > 0).length;
+  const giftTotal = giftEntries.reduce((s,e) => s + e.earned, 0);
+  const kopilkaTotal = totalEarned + giftTotal;
+  const avgDayEarn = daysWorked > 0 ? totalEarned / daysWorked : 0;
+  const totalOrders = earnEntries.reduce((s,e) => s + (e.orders || 0), 0);
+
+  document.getElementById('totalEarned').textContent = fmt(totalEarned);
+  document.getElementById('totalOrders').textContent = fmt(totalOrders);
+  document.getElementById('kopilkaTotal').textContent = fmt(kopilkaTotal);
+  document.getElementById('pendingSum').textContent = fmt(pendingSum);
+  document.getElementById('left').textContent = fmt(Math.max(0, settings.goal - kopilkaTotal));
+  document.getElementById('incGoalSum').textContent = fmt(settings.goal || 0);
+  document.getElementById('incGoalDate').textContent = settings.deadline ? settings.deadline.split('-').reverse().join('.') : '—';
+  document.getElementById('totalHours').textContent = fmtF(totalHours, 1) + ' ' + hoursWord(totalHours);
+  document.getElementById('avgRate').textContent = fmtF(avgRate);
+  document.getElementById('daysWorked').textContent = daysWorked;
+  document.getElementById('avgDayEarn').textContent = fmt(avgDayEarn);
+  document.getElementById('giftTotalInline').textContent = fmt(giftTotal);
+
+  const percent = Math.min(100, kopilkaTotal / settings.goal * 100);
+  document.getElementById('progressFill').style.width = percent + '%';
+  document.getElementById('progressText').textContent = percent.toFixed(1) + '%';
+
+  const thisWeekStart = getWeekStart(today);
+  const lastWeekStart = new Date(thisWeekStart); lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const thisWeekEarn = earnEntries.filter(e => new Date(e.date + 'T00:00:00') >= thisWeekStart).reduce((s,e) => s + e.earned, 0);
+  const lastWeekEarn = earnEntries.filter(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    return d >= lastWeekStart && d < thisWeekStart;
+  }).reduce((s,e) => s + e.earned, 0);
+
+  document.getElementById('thisWeek').textContent = fmt(thisWeekEarn);
+  document.getElementById('lastWeek').textContent = fmt(lastWeekEarn);
+  const diffEl = document.getElementById('weekDiff');
+  if (lastWeekEarn === 0 && thisWeekEarn === 0) diffEl.innerHTML = '<span class="badge info">нет данных</span>';
+  else if (lastWeekEarn === 0) diffEl.innerHTML = `<span class="badge good">+${fmt(thisWeekEarn)} ₽ (первая неделя)</span>`;
+  else {
+    const diff = thisWeekEarn - lastWeekEarn;
+    const diffPct = (diff / lastWeekEarn * 100).toFixed(0);
+    const cls = diff >= 0 ? 'good' : 'bad';
+    const sign = diff >= 0 ? '+' : '';
+    diffEl.innerHTML = `<span class="badge ${cls}">${sign}${fmt(diff)} ₽ (${sign}${diffPct}%)</span>`;
+  }
+
+  const shifts = earnEntries.filter(e => e.hours > 0 || e.earned > 0);
+  const avgShiftEarn = shifts.length > 0 ? totalEarned / shifts.length : 0;
+  const avgShiftHours = shifts.length > 0 ? totalHours / shifts.length : 0;
+  document.getElementById('avgShift').textContent = fmt(avgShiftEarn);
+  document.getElementById('avgShiftHours').textContent = fmtF(avgShiftHours, 1);
+
+  const daysLeft = Math.max(0, daysBetween(today, settings.deadline));
+  const left = Math.max(0, settings.goal - kopilkaTotal);
+  const hoursNeeded = avgRate > 0 ? left / avgRate : 0;
+  const hoursPerDay = daysLeft > 0 ? hoursNeeded / daysLeft : 0;
+  const hoursPerWeek = hoursPerDay * 7;
+  const rubPerDay = daysLeft > 0 ? left / daysLeft : 0;
+  const firstDate = entries.length > 0 ? entries[0].date : today;
+  const daysPassed = Math.max(1, daysBetween(firstDate, today) + 1);
+  const ratePerDay = totalEarned / daysPassed;
+  const forecast = kopilkaTotal + ratePerDay * daysLeft;
+
+  document.getElementById('daysLeft').textContent = daysLeft + ' ' + daysWord(daysLeft);
+  document.getElementById('hoursNeeded').textContent = fmtF(hoursNeeded, 0) + ' ' + hoursWord(hoursNeeded);
+  document.getElementById('hoursPerDay').textContent = fmtF(hoursPerDay, 1);
+  document.getElementById('hoursPerWeek').textContent = fmtF(hoursPerWeek, 1);
+  document.getElementById('rubPerDay').textContent = fmt(rubPerDay);
+  document.getElementById('forecast').textContent = fmt(forecast);
+
+  const badge = document.getElementById('statusBadge');
+  if (kopilkaTotal >= settings.goal) badge.innerHTML = '<span class="badge good">ЦЕЛЬ ДОСТИГНУТА! 🎉</span>';
+  else if (forecast >= settings.goal) badge.innerHTML = '<span class="badge good">Успеваешь</span>';
+  else if (hoursPerDay <= 6) badge.innerHTML = '<span class="badge warn">Нужно поднажать</span>';
+  else badge.innerHTML = '<span class="badge bad">Не успеваешь</span>';
+
+  const deadlineDate = new Date(settings.deadline + 'T00:00:00');
+  const todayDate = new Date(today + 'T00:00:00');
+  const daysByMonth = {};
+  const monthOrder = [];
+  for (let d = new Date(todayDate); d <= deadlineDate; d.setDate(d.getDate()+1)) {
+    const k = monthKey(localDateStr(d));
+    if (!daysByMonth[k]) { daysByMonth[k] = 0; monthOrder.push(k); }
+    daysByMonth[k]++;
+  }
+  const totalRemainingDays = Object.values(daysByMonth).reduce((s,v) => s+v, 0);
+  const ptbody = document.querySelector('#planTable tbody');
+  ptbody.innerHTML = '';
+  monthOrder.forEach(k => {
+    const days = daysByMonth[k];
+    const planEarn = totalRemainingDays > 0 ? left * days / totalRemainingDays : 0;
+    const planHours = avgRate > 0 ? planEarn / avgRate : 0;
+    const perDay = days > 0 ? planHours / days : 0;
+    ptbody.innerHTML += `<tr><td>${k}</td><td>${days}</td><td>${fmt(planEarn)}</td>
+      <td>${fmtF(planHours, 0)}</td><td>${fmtF(perDay, 1)}</td></tr>`;
+  });
+  if (monthOrder.length === 0) ptbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888">Дедлайн прошёл</td></tr>';
+
+  const byWeek = {};
+  earnEntries.forEach(e => {
+    const w = weekKey(e.date);
+    if (!byWeek[w]) byWeek[w] = { hours: 0, earned: 0, start: getWeekStart(e.date) };
+    byWeek[w].hours += e.hours;
+    byWeek[w].earned += e.earned;
+  });
+  const currentWeekKey = weekKey(today);
+  const currentWeekEarn = byWeek[currentWeekKey] ? byWeek[currentWeekKey].earned : 0;
+  const weekPercent = settings.weeklyPlan > 0 ? Math.min(100, currentWeekEarn / settings.weeklyPlan * 100) : 0;
+  document.getElementById('weekProgressFill').style.width = weekPercent + '%';
+  document.getElementById('weekProgressText').textContent = weekPercent.toFixed(0) + '% от плана';
+
+  const wtbody = document.querySelector('#weeklyTable tbody');
+  wtbody.innerHTML = '';
+  const weekKeys = Object.keys(byWeek).sort((a,b) => byWeek[a].start - byWeek[b].start);
+  weekKeys.slice().reverse().forEach(w => {
+    const d = byWeek[w];
+    const plan = settings.weeklyPlan;
+    const diff = d.earned - plan;
+    const cls = diff >= 0 ? 'good' : (diff > -plan*0.3 ? 'warn' : 'bad');
+    const txt = (diff >= 0 ? '+' : '') + fmt(diff);
+    const isCurrent = w === currentWeekKey;
+    const rowStyle = isCurrent ? 'style="background:rgba(46,204,113,0.08);font-weight:600"' : '';
+    wtbody.innerHTML += `<tr ${rowStyle}><td>${w}${isCurrent ? ' (тек.)' : ''}</td>
+      <td>${fmtF(d.hours,1)}</td><td>${fmt(d.earned)}</td><td>${fmt(plan)}</td>
+      <td><span class="badge ${cls}">${txt}</span></td></tr>`;
+  });
+  if (weekKeys.length === 0) wtbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888">Нет данных</td></tr>';
+
+  const byDayOfWeek = {};
+  WEEKDAYS.forEach(d => byDayOfWeek[d] = { hours: 0, earned: 0, count: 0 });
+  earnEntries.forEach(e => {
+    const d = dayOfWeek(e.date);
+    byDayOfWeek[d].hours += e.hours;
+    byDayOfWeek[d].earned += e.earned;
+    if (e.hours > 0 || e.earned > 0) byDayOfWeek[d].count++;
+  });
+  const sorted = Object.entries(byDayOfWeek).filter(([_,v]) => v.count > 0).sort((a,b) => b[1].earned - a[1].earned);
+  const btbody = document.querySelector('#bestDaysTable tbody');
+  btbody.innerHTML = '';
+  sorted.forEach(([day, v]) => {
+    const avg = v.count > 0 ? v.earned / v.count : 0;
+    const rate = v.hours > 0 ? v.earned / v.hours : 0;
+    btbody.innerHTML += `<tr><td>${day}</td><td>${v.count}</td><td>${fmtF(v.hours,1)}</td>
+      <td>${fmt(v.earned)}</td><td>${fmt(avg)}</td><td>${fmtF(rate,0)}</td></tr>`;
+  });
+  if (sorted.length === 0) btbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888">Нет данных</td></tr>';
+
+  const byCat = {};
+  earnEntries.forEach(e => {
+    const c = e.category || 'Без категории';
+    if (!byCat[c]) byCat[c] = { hours: 0, earned: 0, count: 0 };
+    byCat[c].hours += e.hours; byCat[c].earned += e.earned; byCat[c].count++;
+  });
+  const catSorted = Object.entries(byCat).sort((a,b) => b[1].earned - a[1].earned);
+  const ctbody = document.querySelector('#categoriesTable tbody');
+  ctbody.innerHTML = '';
+  catSorted.forEach(([cat, v]) => {
+    const share = totalEarned > 0 ? (v.earned / totalEarned * 100).toFixed(1) : '0';
+    const rate = v.hours > 0 ? v.earned / v.hours : 0;
+    ctbody.innerHTML += `<tr><td><span class="cat-tag">${cat}</span></td><td>${fmtF(v.hours,1)}</td>
+      <td>${fmt(v.earned)}</td><td>${share}%</td><td>${fmtF(rate,0)}</td></tr>`;
+  });
+  if (catSorted.length === 0) ctbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888">Нет данных</td></tr>';
+
+  const gtbody = document.querySelector('#giftsTable tbody');
+  gtbody.innerHTML = '';
+  giftEntries.slice().reverse().forEach(e => {
+    gtbody.innerHTML += `<tr><td>${e.date}</td><td>${e.category || 'Подарок'}</td><td>${fmt(e.earned)}</td>
+      <td><span class="del" onclick="removeEntry(${e.id})">×</span></td></tr>`;
+  });
+  if (giftEntries.length === 0) gtbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888">Подарков пока нет</td></tr>';
+  document.getElementById('giftCount').textContent = giftEntries.length;
+  document.getElementById('giftTotalCard').textContent = fmt(giftTotal);
+  if (giftEntries.length > 0) {
+    const gbest = giftEntries.reduce((a,b) => a.earned > b.earned ? a : b);
+    document.getElementById('giftBest').textContent = (gbest.category || 'Подарок') + ' (' + fmt(gbest.earned) + ' ₽)';
+  } else {
+    document.getElementById('giftBest').textContent = '—';
+  }
+
+  const byMonth = {};
+  earnEntries.forEach(e => {
+    const m = monthKey(e.date);
+    if (!byMonth[m]) byMonth[m] = { hours: 0, earned: 0, days: {} };
+    byMonth[m].hours += e.hours; byMonth[m].earned += e.earned;
+    byMonth[m].days[e.date] = true;
+  });
+  const mtbody = document.querySelector('#monthlyTable tbody');
+  mtbody.innerHTML = '';
+  const curMonth = monthKey(today);
+  Object.keys(byMonth).forEach(m => {
+    const d = byMonth[m];
+    const daysCnt = Object.keys(d.days).length;
+    const perDay = daysCnt > 0 ? d.earned / daysCnt : 0;
+    const rate = d.hours > 0 ? fmtF(d.earned/d.hours) : '—';
+    const isCur = m === curMonth;
+    const rowStyle = isCur ? ' style="background:rgba(46,204,113,0.08);font-weight:600"' : '';
+    mtbody.innerHTML += `<tr${rowStyle}><td>${m}${isCur ? ' (идёт)' : ''}</td><td>${daysCnt}</td><td>${fmtF(d.hours,1)}</td><td>${fmt(d.earned)}</td><td>${fmt(perDay)}</td><td>${rate}</td></tr>`;
+  });
+  if (Object.keys(byMonth).length === 0) mtbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888">Нет данных</td></tr>';
+
+  const dl = document.getElementById('categoryList');
+  dl.innerHTML = '';
+  cats.forEach(c => { const o = document.createElement('option'); o.value = c; dl.appendChild(o); });
+
+  document.getElementById('incStreak').textContent = currentStreak(entries.map(e => e.date), today);
+
+  updateCalcStats();
+  updateEvents();
+  updateChart();
+  checkGoalCelebration(kopilkaTotal);
+}
+
+// ============ КОРМ ============
+const FEED_DAYS = 21; // 3 недели
+function giveFeed() {
+  const date = document.getElementById('feedDate').value;
+  if (!date) return alert('Укажи дату');
+  const endDate = new Date(date + 'T00:00:00');
+  endDate.setDate(endDate.getDate() + FEED_DAYS);
+  feeds.push({ id: Date.now(), date, endDate: localDateStr(endDate) });
+  saveFeeds();
+  renderChicken();
+  showToast('🍗 Корм выдан! Хватит на ' + FEED_DAYS + ' дней');
+}
+function removeFeed(id) {
+  if (!confirm('Удалить запись о корме?')) return;
+  feeds = feeds.filter(f => f.id !== id);
+  saveFeeds();
+  renderChicken();
+}
+function renderChicken() {
+  const today = todayStr();
+  feeds.sort((a,b) => a.date.localeCompare(b.date));
+
+  const tbody = document.querySelector('#feedHistoryTable tbody');
+  tbody.innerHTML = '';
+  feeds.slice().reverse().forEach(f => {
+    const days = daysBetween(f.date, f.endDate);
+    const expired = f.endDate < today;
+    const rowStyle = expired ? 'style="opacity:0.5"' : '';
+    tbody.innerHTML += `<tr ${rowStyle}><td>${f.date}</td><td>${f.endDate}</td><td>${days}</td>
+      <td><span class="del" onclick="removeFeed(${f.id})">×</span></td></tr>`;
+  });
+  if (feeds.length === 0) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888">Корм ещё не выдавался</td></tr>';
+
+  // Активный корм — тот, у которого endDate >= today
+  const activeFeed = feeds.filter(f => f.endDate >= today).sort((a,b) => a.endDate.localeCompare(b.endDate))[0];
+
+  const emoji = document.getElementById('chickenEmoji');
+  const status = document.getElementById('feedStatus');
+
+  if (activeFeed) {
+    const daysLeft = daysBetween(today, activeFeed.endDate);
+    const percent = Math.max(0, Math.min(100, daysLeft / FEED_DAYS * 100));
+    document.getElementById('feedProgressFill').style.width = percent + '%';
+    document.getElementById('feedProgressText').textContent = daysLeft + ' дн.';
+    document.getElementById('feedGivenDate').textContent = activeFeed.date;
+    document.getElementById('feedEndDate').textContent = activeFeed.endDate;
+    document.getElementById('feedDaysLeft').textContent = daysLeft;
+    document.getElementById('feedWeeksLeft').textContent = fmtF(daysLeft / 7, 1);
+
+    // Цвет прогресса
+    const fill = document.getElementById('feedProgressFill');
+    fill.classList.remove('orange', 'red');
+    if (daysLeft <= 3) { fill.classList.add('red'); status.className = 'feed-status bad'; status.textContent = '⚠️ Корм заканчивается! Срочно нужен новый'; emoji.className = 'chicken-visual sad'; }
+    else if (daysLeft <= 7) { fill.classList.add('orange'); status.className = 'feed-status warn'; status.textContent = '🍗 Корм заканчивается, скоро нужен новый'; emoji.className = 'chicken-visual'; }
+    else { status.className = 'feed-status good'; status.textContent = '✅ Курица сыта и довольна'; emoji.className = 'chicken-visual happy'; }
+  } else {
+    document.getElementById('feedProgressFill').style.width = '0%';
+    document.getElementById('feedProgressText').textContent = '0%';
+    document.getElementById('feedGivenDate').textContent = '—';
+    document.getElementById('feedEndDate').textContent = '—';
+    document.getElementById('feedDaysLeft').textContent = '—';
+    document.getElementById('feedWeeksLeft').textContent = '—';
+    status.className = 'feed-status bad';
+    status.textContent = '❌ Корма нет! Курица голодает';
+    emoji.className = 'chicken-visual sad';
+    emoji.textContent = '🐔';
+  }
+
+  document.getElementById('totalFeeds').textContent = feeds.length;
+  document.getElementById('totalFeedDays').textContent = feeds.length * FEED_DAYS;
+  if (feeds.length > 0) {
+    const firstFeed = feeds[0].date;
+    document.getElementById('chickenAge').textContent = Math.max(0, daysBetween(firstFeed, today));
+  } else {
+    document.getElementById('chickenAge').textContent = '0';
+  }
+}
+
+// ============ КАЛЬКУЛЯТОР ДОХОДА ============
+const CALC_KEY = 'income_tracker_calc_v1';
+let calcSrcLabel = ''; // «за последние 30 дней» / «за всё время» / «пока нет истории»
+function calcDefaults() {
+  // смена = рабочий день (не подарок, есть часы или заработок)
+  const today = todayStr();
+  const cutoff = localDateStr(new Date(new Date(today + 'T12:00:00').getTime() - 30 * 86400000));
+  let work = entries.filter(e => !e.gift && (e.hours > 0 || e.earned > 0) && e.date >= cutoff && e.date <= today);
+  calcSrcLabel = 'за последние 30 дней';
+  if (work.length === 0) {
+    work = entries.filter(e => !e.gift && (e.hours > 0 || e.earned > 0) && e.date <= today);
+    calcSrcLabel = work.length ? 'за всё время' : 'пока нет истории';
+  }
+  if (work.length === 0) return { avgShift: 2500, shiftsWeek: 5, hoursShift: 8, orders: 0 };
+  const earn = work.reduce((sum, e) => sum + e.earned, 0);
+  const hrs = work.reduce((sum, e) => sum + (e.hours || 0), 0);
+  const ords = work.reduce((sum, e) => sum + (e.orders || 0), 0);
+  const first = work.reduce((a, e) => e.date < a ? e.date : a, work[0].date);
+  const span = Math.max(7, daysBetween(first, today) + 1); // ранняя история не должна завышать «в неделю»
+  return {
+    avgShift: Math.round(earn / work.length),
+    shiftsWeek: Math.round(work.length / (span / 7) * 10) / 10,
+    hoursShift: hrs > 0 ? Math.round(hrs / work.length * 10) / 10 : 8,
+    orders: ords > 0 ? Math.round(ords / work.length * 10) / 10 : 0
+  };
+}
+function calcReadInputs() {
+  return {
+    avgShift: parseFloat(document.getElementById('calcAvgShift').value) || 0,
+    shiftsWeek: parseFloat(document.getElementById('calcShiftsWeek').value) || 0,
+    hoursShift: parseFloat(document.getElementById('calcHoursShift').value) || 0
+  };
+}
+function calcRecalc() {
+  const p = calcReadInputs();
+  if (p.avgShift > 0) localStorage.setItem(CALC_KEY, JSON.stringify(p)); // пустые поля не затирают сохранённое
+  const weekly = p.avgShift * p.shiftsWeek;
+  document.getElementById('calcWeek').textContent = fmt(weekly);
+  document.getElementById('calcMonth').textContent = fmt(weekly * 52 / 12);
+  document.getElementById('calcYear').textContent = fmt(weekly * 52);
+  document.getElementById('calcRate').textContent = p.hoursShift > 0 ? fmt(p.avgShift / p.hoursShift) : '—';
+  const d = calcDefaults();
+  const ordEl = document.getElementById('calcOrders');
+  if (d.orders > 0 && p.shiftsWeek > 0) ordEl.textContent = fmt(Math.round(d.orders * p.shiftsWeek * 52 / 12));
+  else ordEl.textContent = '—';
+  const planLine = document.getElementById('calcPlanLine');
+  const plan = settings.weeklyPlan || 0;
+  if (plan > 0) {
+    const diff = weekly - plan;
+    const pct = Math.abs(diff / plan * 100).toFixed(0);
+    if (Math.abs(diff) < 1) planLine.innerHTML = '<span class="badge info">ровно по плану</span>';
+    else if (diff > 0) planLine.innerHTML = '<span class="badge good">перевыполнишь на ' + fmt(diff) + ' ₽ (+' + pct + '%)</span>';
+    else planLine.innerHTML = '<span class="badge bad">не доберёшь ' + fmt(-diff) + ' ₽ (-' + pct + '%)</span>';
+  } else planLine.textContent = 'план не задан';
+  const line = document.getElementById('calcStatsLine');
+  if (d.avgShift) {
+    line.innerHTML = '<b>История (' + calcSrcLabel + '):</b> средняя смена ' + fmt(d.avgShift) + ' ₽ · ' +
+      d.shiftsWeek + ' смен/нед · ' + d.hoursShift + ' ч/смену' + (d.orders ? ' · ' + d.orders + ' заказов/смену' : '');
+  } else {
+    line.innerHTML = '<b>История:</b> пока пусто — заполни пару смен, и калькулятор подставит сам.';
+  }
+}
+function calcFill(p) {
+  document.getElementById('calcAvgShift').value = p.avgShift;
+  document.getElementById('calcShiftsWeek').value = p.shiftsWeek;
+  document.getElementById('calcHoursShift').value = p.hoursShift;
+}
+function calcReset() {
+  calcFill(calcDefaults());
+  calcRecalc();
+  showToast('↩️ Подставил твои средние из истории');
+}
+function updateCalcStats() { calcRecalc(); } // история изменилась — обновить строку и план
+function calcInit() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(CALC_KEY) || 'null'); } catch (e) {}
+  if (saved && saved.avgShift > 0) calcFill(saved); else calcFill(calcDefaults());
+  calcRecalc();
+}
+// ============ НАКРУТКА ЧАСОВ ============
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function addGame() {
+  const name = (document.getElementById('gameName').value || '').trim();
+  const real = parseFloat(document.getElementById('gameReal').value) || 0;
+  const target = parseFloat(document.getElementById('gameTarget').value) || 0;
+  const grinded = parseFloat(document.getElementById('gameGrinded').value) || 0;
+  if (!name) return alert('Укажи название игры');
+  if (target <= 0) return alert('Укажи, сколько часов нужно накрутить');
+  games.push({ id: Date.now(), name, real, target, grinded });
+  saveGames();
+  document.getElementById('gameName').value = '';
+  document.getElementById('gameReal').value = '';
+  document.getElementById('gameTarget').value = '';
+  document.getElementById('gameGrinded').value = '';
+  renderHours();
+  showToast('🎮 Игра добавлена: ' + name);
+}
+function removeGame(id) {
+  if (!confirm('Удалить игру и весь её прогресс накрутки?')) return;
+  games = games.filter(g => g.id !== id);
+  saveGames();
+  renderHours();
+}
+function setGameField(id, field, value) {
+  const g = games.find(x => x.id === id);
+  if (!g) return;
+  const v = parseFloat(value);
+  if (isNaN(v) || v < 0) { renderHours(); return; }
+  g[field] = v;
+  saveGames();
+  renderHours();
+}
+function applyGrind(id, delta) {
+  const g = games.find(x => x.id === id);
+  if (!g) return;
+  const wasDone = (g.grinded || 0) >= g.target;
+  g.grinded = Math.max(0, (g.grinded || 0) + delta);
+  saveGames();
+  renderHours();
+  if (!wasDone && g.target > 0 && g.grinded >= g.target) { confettiBurst(150); playFanfare(); showToast('🎉 ' + g.name + ': накрутка завершена!'); }
+}
+function addGrind(id) {
+  const el = document.getElementById('grindInput' + id);
+  const val = parseFloat(el.value);
+  if (isNaN(val) || val === 0) return alert('Введи, сколько часов накрутил (например 2.5)');
+  applyGrind(id, val);
+  el.value = '';
+}
+function quickGrind(id, delta) { applyGrind(id, delta); }
+function renderHours() {
+  const list = document.getElementById('gamesList');
+  if (!list) return;
+  games.sort((a,b) => a.id - b.id);
+  list.innerHTML = '';
+  games.forEach(g => {
+    const grinded = g.grinded || 0;
+    const target = g.target || 0;
+    const pct = target > 0 ? Math.min(100, grinded / target * 100) : 0;
+    const left = Math.max(0, target - grinded);
+    const steamTotal = (g.real || 0) + grinded;
+    const done = target > 0 && grinded >= target;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="header-row">
+        <h3>🎮 ${escapeHtml(g.name)} ${done ? '✅' : ''}</h3>
+        <span class="del" onclick="removeGame(${g.id})">×</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div><div class="progress-text">${pct.toFixed(1)}%</div></div>
+      <div class="stat"><span>Реальные часы в Steam:</span><input class="num-in" type="number" step="0.1" min="0" value="${g.real || 0}" onchange="setGameField(${g.id},'real',this.value)"></div>
+      <div class="stat"><span>План накрутки, ч:</span><input class="num-in" type="number" step="0.1" min="0" value="${target}" onchange="setGameField(${g.id},'target',this.value)"></div>
+      <div class="stat"><span>Накручено:</span><b>${fmtF(grinded,1)} / ${fmtF(target,1)} ч</b></div>
+      <div class="stat"><span>Осталось накрутить:</span><b>${fmtF(left,1)} ч</b></div>
+      <div class="stat"><span>Итого в Steam (реал + накрут):</span><b>${fmtF(steamTotal,1)} ч</b></div>
+      <div class="row" style="margin-top:8px">
+        <input type="number" id="grindInput${g.id}" placeholder="Сколько накрутил, ч" step="0.1">
+        <button class="small" onclick="addGrind(${g.id})">Прибавить</button>
+      </div>
+      <div class="quick-btns" style="margin-top:2px">
+        <button onclick="quickGrind(${g.id}, 0.5)">+0.5 ч</button>
+        <button onclick="quickGrind(${g.id}, 1)">+1 ч</button>
+        <button onclick="quickGrind(${g.id}, 3)">+3 ч</button>
+        <button onclick="quickGrind(${g.id}, 5)">+5 ч</button>
+        <button onclick="quickGrind(${g.id}, 10)">+10 ч</button>
+        <button onclick="quickGrind(${g.id}, -1)">-1 ч</button>
+      </div>`;
+    list.appendChild(card);
+  });
+  if (games.length === 0) {
+    list.innerHTML = '<div class="card"><div class="muted" style="text-align:center;padding:8px">Игр пока нет. Добавь первую игру выше 👆</div></div>';
+  }
+  const planTotal = games.reduce((s,g) => s + (g.target || 0), 0);
+  const doneTotal = games.reduce((s,g) => s + (g.grinded || 0), 0);
+  const realTotal = games.reduce((s,g) => s + (g.real || 0), 0);
+  const pctAll = planTotal > 0 ? Math.min(100, doneTotal / planTotal * 100) : 0;
+  document.getElementById('grindTotalFill').style.width = pctAll + '%';
+  document.getElementById('grindTotalText').textContent = pctAll.toFixed(1) + '%';
+  document.getElementById('grindGamesCount').textContent = games.length;
+  document.getElementById('grindPlanTotal').textContent = fmtF(planTotal, 1);
+  document.getElementById('grindDoneTotal').textContent = fmtF(doneTotal, 1);
+  document.getElementById('grindLeftTotal').textContent = fmtF(Math.max(0, planTotal - doneTotal), 1);
+  document.getElementById('grindSteamTotal').textContent = fmtF(realTotal + doneTotal, 1);
+}
+
+// ============ КОПИЛКА: ЦЕЛИ И АЧИВКИ ============
+const WISH_EMOJIS = ['🎧','🎮','👟','🖥️','📱','⌚','🚲','🎒','🧸','🕹️'];
+function saveWishes() { localStorage.setItem(WISHES_KEY, JSON.stringify(wishes)); }
+function setWishEmoji(e) { document.getElementById('wishEmoji').value = e; }
+function saveGoalFromPiggy() {
+  const g = parseFloat(document.getElementById('piggyGoalInput').value);
+  const d = document.getElementById('piggyDeadlineInput').value;
+  if (!g || g <= 0) return alert('Укажи сумму главной цели');
+  if (!d) return alert('Укажи дедлайн');
+  settings.goal = g;
+  settings.deadline = d;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  renderIncome();
+  renderPiggy();
+  showToast('🏁 Главная цель обновлена');
+}
+function addWish() {
+  const emoji = (document.getElementById('wishEmoji').value || '').trim() || '🎯';
+  const name = (document.getElementById('wishName').value || '').trim();
+  const price = parseFloat(document.getElementById('wishPrice').value) || 0;
+  if (!name) return alert('Придумай название цели (например «Наушники»)');
+  if (price <= 0) return alert('Укажи цену цели');
+  wishes.push({ id: Date.now(), emoji, name, price, saved: 0, bought: false, boughtDate: null,
+                createdAt: todayStr() });
+  saveWishes();
+  document.getElementById('wishEmoji').value = '';
+  document.getElementById('wishName').value = '';
+  document.getElementById('wishPrice').value = '';
+  renderPiggy();
+  showToast(emoji + ' Цель добавлена: ' + name);
+}
+function removeWish(id) {
+  if (!confirm('Удалить цель? Отложенные деньги вернутся в свободный баланс.')) return;
+  wishes = wishes.filter(w => w.id !== id);
+  saveWishes();
+  renderPiggy();
+}
+function wishStats() {
+  const t = todayStr();
+  const earnEntries = entries.filter(e => !e.gift && e.date <= t);
+  const giftEntries = entries.filter(e => e.gift && e.date <= t);
+  const workEarned = earnEntries.reduce((s,e) => s + e.earned, 0);
+  const giftSum = giftEntries.reduce((s,e) => s + e.earned, 0);
+  const kopTotal = workEarned + giftSum;
+  const totalHours = earnEntries.reduce((s,e) => s + e.hours, 0);
+  const avgRate = totalHours > 0 ? workEarned / totalHours : 0;
+  const allocated = wishes.filter(w => !w.bought).reduce((s,w) => s + (w.saved || 0), 0);
+  const spent = wishes.filter(w => w.bought).reduce((s,w) => s + (w.saved || 0), 0);
+  const free = Math.max(0, kopTotal - allocated - spent);
+  return { earnEntries, giftEntries, workEarned, kopTotal, totalHours, avgRate, allocated, spent, free };
+}
+function topUpWish(id, amount) {
+  const w = wishes.find(x => x.id === id);
+  if (!w) return;
+  const st = wishStats();
+  if (amount > 0) {
+    if (st.free <= 0) return alert('Свободных денег в копилке нет. Добавь доход во вкладке «Доход» — он автоматически попадёт в копилку.');
+    const maxAdd = Math.min(amount, st.free, Math.max(0, w.price - (w.saved || 0)));
+    if (maxAdd <= 0) return alert('Эта цель уже полностью накоплена!');
+    w.saved = (w.saved || 0) + maxAdd;
+    saveWishes();
+    renderPiggy();
+    playCoin();
+    if (w.saved >= w.price) { confettiBurst(140); playFanfare(); showToast('🎉 «' + w.name + '» накоплена полностью!'); }
+    else if (maxAdd < amount) showToast('🟡 Отложено ' + fmt(maxAdd) + ' ₽ — свободных денег было меньше');
+    else showToast('🐷 +' + fmt(maxAdd) + ' ₽ к цели «' + w.name + '»');
+  } else {
+    w.saved = Math.max(0, (w.saved || 0) + amount);
+    saveWishes();
+    renderPiggy();
+  }
+}
+function addWishTopUp(id) {
+  const el = document.getElementById('wishInput' + id);
+  if (!el) return;
+  const val = parseFloat(el.value);
+  if (isNaN(val) || val <= 0) return alert('Введи сумму больше нуля (например 500)');
+  topUpWish(id, val);
+  el.value = '';
+}
+function quickTopUp(id, delta) { topUpWish(id, delta); }
+function markBought(id) {
+  const w = wishes.find(x => x.id === id);
+  if (!w) return;
+  if ((w.saved || 0) < w.price &&
+      !confirm('Накоплено ' + fmt(w.saved || 0) + ' из ' + fmt(w.price) + ' ₽. Всё равно отметить покупкой?')) return;
+  w.bought = true;
+  w.boughtDate = todayStr();
+  saveWishes();
+  renderPiggy();
+  confettiBurst(180);
+  playFanfare();
+  showToast('🎉 Ура! «' + w.name + '» — куплено!');
+}
+function reopenWish(id) {
+  const w = wishes.find(x => x.id === id);
+  if (!w) return;
+  w.bought = false;
+  w.boughtDate = null;
+  saveWishes();
+  renderPiggy();
+}
+function calcStreak(dates) {
+  const set = [...new Set(dates)].sort();
+  if (set.length === 0) return 0;
+  let best = 1, cur = 1;
+  for (let i = 1; i < set.length; i++) {
+    const diff = daysBetween(set[i-1], set[i]);
+    cur = diff === 1 ? cur + 1 : 1;
+    if (cur > best) best = cur;
+  }
+  return best;
+}
+// ============ СОБЫТИЯ КУРЬЕРКИ (КВЕСТЫ) ============
+function saveEvents() { localStorage.setItem(EVENTS_KEY, JSON.stringify(events)); }
+let editingEventId = null; // id события, которое сейчас правится в форме (null — форма в режиме создания)
+const EVENTS_ARCH_KEY = 'income_tracker_events_arch_v1';
+const EVENT_META = {
+  orders: { icon: '🛵', one: 'заказ', few: 'заказа', gen: 'заказов', acc: 'доставлено' },
+  hours:  { icon: '⏱', one: 'час',  few: 'часа',  gen: 'часов',  acc: 'наработано' },
+  earned: { icon: '💰', one: '₽',    few: '₽',     gen: '₽',      acc: 'заработано' },
+  shifts: { icon: '📅', one: 'смена', few: 'смены', gen: 'смен',   acc: 'отработано' }
+};
+function eventAmount(ev) {
+  const m = EVENT_META[ev.type] || EVENT_META.orders;
+  return fmt(ev.target) + ' ' + plural(ev.target, m.one, m.few, m.gen);
+}
+function eventProgress(ev) {
+  const rel = entries.filter(e => !e.gift && e.date >= ev.start && e.date <= (ev.deadline || todayStr()));
+  if (ev.type === 'orders') return rel.reduce((s,e) => s + (e.orders || 0), 0);
+  if (ev.type === 'hours')  return rel.reduce((s,e) => s + (e.hours || 0), 0);
+  if (ev.type === 'earned') return rel.reduce((s,e) => s + e.earned, 0);
+  return rel.filter(e => e.hours > 0 || e.earned > 0).length;
+}
+// Темп: сколько осталось делать в день, чтобы успеть к дедлайну события.
+// Конечный день включительный (событие работает до 00:00), значит рабочих дней = сегодня + дни до дедлайна.
+function eventPace(ev, raw, today) {
+  const rem = Math.max(0, ev.target - raw);
+  if (rem <= 0 || !ev.deadline) return '';
+  const dLeft = daysBetween(today, ev.deadline);
+  if (dLeft < 0) return '';
+  const perDay = rem / (dLeft + 1); // включаем и сегодня, и сам день дедлайна
+  const m = EVENT_META[ev.type] || EVENT_META.orders;
+  if (ev.type === 'earned') return '≈' + fmt(Math.ceil(perDay / 50) * 50) + ' ₽ в день';
+  const n = Math.ceil(perDay);
+  return '≈' + n + ' ' + plural(n, m.one, m.few, m.gen) + ' в день';
+}
+function addEvent() {
+  const type = document.getElementById('eventType').value;
+  const target = parseFloat(document.getElementById('eventTarget').value) || 0;
+  const reward = (document.getElementById('eventReward').value || '').trim();
+  const deadline = document.getElementById('eventDeadline').value;
+  if (!target || target <= 0) return alert('Укажи, сколько нужно выполнить');
+  const today = todayStr();
+  const start = document.getElementById('eventStart').value || today;
+  if (deadline && start > deadline) return alert('Дата «Действует с» не может быть позже дедлайна');
+  if (editingEventId) {
+    // Режим редактирования: обновляем поля существующего события, а не создаём новое
+    const ev = events.find(x => x.id === editingEventId);
+    if (!ev) { cancelEditEvent(); return showToast('🤔 Событие уже удалено — форма сброшена'); }
+    ev.type = type; ev.target = target; ev.reward = reward; ev.start = start; ev.deadline = deadline;
+    // Пересчёт статуса: цель подняли выше достигнутой — событие вернётся в работу;
+    // снизили до достигнутой — сразу выполнено (без повторного конфетти)
+    if (eventProgress(ev) >= ev.target) { if (!ev.done) { ev.done = true; ev.doneDate = today; } }
+    else { ev.done = false; ev.doneDate = null; }
+    saveEvents();
+    cancelEditEvent();
+    updateEvents();
+    showToast('✏️ Событие обновлено!');
+    return;
+  }
+  events.push({ id: Date.now(), type, target, reward, deadline, start, createdAt: today, done: false, doneDate: null });
+  saveEvents();
+  document.getElementById('eventTarget').value = '';
+  document.getElementById('eventReward').value = '';
+  document.getElementById('eventStart').value = today;
+  updateEvents();
+  showToast('🎲 Событие создано! Погнали!');
+}
+// Включить режим редактирования: поля события — в форму, кнопки переключаются
+function startEditEvent(id) {
+  const ev = events.find(x => x.id === id);
+  if (!ev) return;
+  editingEventId = id;
+  document.getElementById('eventType').value = ev.type;
+  document.getElementById('eventTarget').value = ev.target;
+  document.getElementById('eventReward').value = ev.reward || '';
+  document.getElementById('eventStart').value = ev.start || todayStr();
+  document.getElementById('eventDeadline').value = ev.deadline || '';
+  document.getElementById('eventSaveBtn').textContent = '💾 Сохранить изменения';
+  document.getElementById('eventRandBtn').style.display = 'none';
+  document.getElementById('eventCancelBtn').style.display = '';
+  document.getElementById('eventEditHint').style.display = 'block';
+  document.getElementById('eventsTitle').textContent = '✏️ Редактирование события';
+  document.getElementById('eventType').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+// Выйти из режима редактирования и вернуть форму в режим создания
+function cancelEditEvent() {
+  editingEventId = null;
+  document.getElementById('eventTarget').value = '';
+  document.getElementById('eventReward').value = '';
+  document.getElementById('eventDeadline').value = '';
+  document.getElementById('eventSaveBtn').textContent = '🎯 Создать событие';
+  document.getElementById('eventRandBtn').style.display = '';
+  document.getElementById('eventCancelBtn').style.display = 'none';
+  document.getElementById('eventEditHint').style.display = 'none';
+  document.getElementById('eventsTitle').textContent = '🎲 События курьерки';
+  const es = document.getElementById('eventStart');
+  if (es) es.value = todayStr();
+}
+const RANDOM_REWARDS = ['бонус от платформы 🤑','шаурма за счёт победителя 🌯','энергетик + пельмени 🍜','пицца-вечеринка 🍕','новая игра в стиме 🎮','кино с попкорном 🍿','+500 ₽ в копилку 🐷','крутой десерт 🍰','день без готовки — доставка! 🛵','скидка на мечту 🎧'];
+function randomEvent() {
+  if (editingEventId) return showToast('Сначала сохрани или отмени редактирование (✖)');
+  const today = todayStr();
+  const earnEntries = entries.filter(e => !e.gift);
+  const daysWorked = earnEntries.filter(e => e.hours > 0 || e.earned > 0).length;
+  const avgDayEarn = daysWorked ? earnEntries.reduce((s,e) => s + e.earned, 0) / daysWorked : 800;
+  const withOrders = earnEntries.filter(e => e.orders > 0);
+  const avgOrders = withOrders.length ? withOrders.reduce((s,e) => s + e.orders, 0) / withOrders.length : 12;
+  const avgHours = daysWorked ? earnEntries.reduce((s,e) => s + (e.hours || 0), 0) / daysWorked : 6;
+  const start = (document.getElementById('eventStart') || {}).value || today;
+  const dur = 3 + Math.floor(Math.random() * 5);
+  const base = start > today ? start : today;
+  const deadline = localDateStr(new Date(new Date(base + 'T12:00:00').getTime() + dur * 86400000));
+  const types = ['orders','hours','earned','shifts'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  let target;
+  if (type === 'orders') target = Math.max(10, Math.round(avgOrders * dur * (1.1 + Math.random() * 0.3)));
+  else if (type === 'hours') target = Math.max(6, Math.round(avgHours * dur * (1.05 + Math.random() * 0.25)));
+  else if (type === 'earned') target = Math.max(500, Math.round(avgDayEarn * dur * (1.05 + Math.random() * 0.3) / 100) * 100);
+  else target = Math.max(2, Math.round(dur * 0.6));
+  const reward = RANDOM_REWARDS[Math.floor(Math.random() * RANDOM_REWARDS.length)];
+  events.push({ id: Date.now(), type, target, reward, deadline, start, createdAt: today, done: false, doneDate: null });
+  saveEvents();
+  updateEvents();
+  showToast('🎲 Событие: ' + EVENT_META[type].icon + ' ' + fmt(target) + ' ' + plural(target, EVENT_META[type].one, EVENT_META[type].few, EVENT_META[type].gen) + ' за ' + dur + ' ' + daysWord(dur));
+}
+function deleteEvent(id) {
+  if (!confirm('Удалить событие? Записи смен останутся — пропадёт только само событие и его прогресс.')) return;
+  events = events.filter(ev => ev.id !== id);
+  saveEvents();
+  updateEvents();
+}
+function shortDate(ds) { return ds ? ds.slice(8, 10) + '.' + ds.slice(5, 7) : '?'; }
+// Карточка события: inArchive=false — активная (со сроком и темпом), true — архивная (итог + удаление)
+function eventCard(ev, today, inArchive) {
+  const m = EVENT_META[ev.type] || EVENT_META.orders;
+  const raw = eventProgress(ev);
+  const pct = Math.min(100, raw / ev.target * 100);
+  const over = raw > ev.target;
+  let dl, extra = '';
+  if (inArchive) {
+    if (ev.done) extra = '<span class="badge good">✅ выполнено ' + (ev.doneDate || '') + '</span>';
+    else extra = '<span class="badge bad">⏰ не успел — дедлайн был ' + (ev.deadline || '?') + '</span>';
+    dl = '📅 ' + shortDate(ev.start) + ' → ' + (ev.done ? shortDate(ev.doneDate) : shortDate(ev.deadline));
+  } else if (ev.deadline) {
+    const dLeft = daysBetween(today, ev.deadline);
+    if (dLeft === 0) dl = '⏰ последний день — успей до 00:00!';
+    else if (dLeft > 0) dl = '⏳ осталось ' + dLeft + ' ' + daysWord(dLeft) + ' + сегодня';
+    else dl = '⏰ время вышло — добей!';
+  } else dl = '∞ без дедлайна';
+  const pace = inArchive ? '' : eventPace(ev, raw, today);
+  const card = document.createElement('div');
+  card.className = 'card';
+  if (ev.done) card.style.opacity = '0.7';
+  card.innerHTML =
+    '<div class="stat"><span>' + m.icon + ' <b>' + eventAmount(ev) + '</b></span>' +
+    '<span class="cat-tag gift-tag">🎁 ' + escapeHtml(ev.reward || 'бонус') + '</span></div>' +
+    '<div class="progress-bar"><div class="progress-fill' + (ev.done ? ' orange' : '') + '" style="width:' + pct + '%"></div><div class="progress-text">' + Math.floor(pct) + '%</div></div>' +
+    '<div class="stat"><span>' + m.acc + ': ' + fmt(Math.min(raw, ev.target)) + ' / ' + fmt(ev.target) + (over && !ev.done ? ' (перевыполнил! ' + fmt(raw) + ')' : '') + '</span>' + (inArchive ? extra : '<b>' + dl + '</b>') + '</div>' +
+    (!inArchive && ev.start ? '<div class="stat"><span style="opacity:.75">📅 Действует</span><b>с ' + shortDate(ev.start) + (ev.deadline ? ' по ' + shortDate(ev.deadline) + ' включительно' : ' (без срока)') + '</b></div>' : '') +
+    (pace ? '<div class="stat"><span style="opacity:.75">📍 Чтобы успеть</span><b style="color:#e67e22">' + pace + '</b></div>' : '') +
+    (inArchive ? '<div class="stat"><span style="opacity:.75">Период</span><b>' + dl + '</b></div>' : '') +
+    '<div class="quick-btns" style="margin-bottom:0">' +
+    '<button class="secondary" onclick="startEditEvent(' + ev.id + ')">✏️ Изменить</button>' +
+    '<button class="' + (inArchive ? '' : 'ghost') + '" onclick="deleteEvent(' + ev.id + ')">🗑 Удалить</button>' +
+    '</div>';
+  return card;
+}
+function toggleArchive() {
+  const box = document.getElementById('eventsArchiveList');
+  const open = box.style.display !== 'none';
+  box.style.display = open ? 'none' : 'block';
+  localStorage.setItem(EVENTS_ARCH_KEY, open ? 'closed' : 'open');
+  document.getElementById('archChevron').textContent = open ? '▸' : '▾';
+}
+function updateEvents() {
+  const box = document.getElementById('eventsList');
+  if (!box) return;
+  const today = todayStr();
+  const esDef = document.getElementById('eventStart');
+  if (esDef && !esDef.value) esDef.value = today;
+  let justDone = null;
+  events.forEach(ev => {
+    if (!ev.done && eventProgress(ev) >= ev.target) {
+      ev.done = true; ev.doneDate = today; justDone = ev;
+    }
+  });
+  if (justDone) {
+    saveEvents();
+    confettiBurst(180);
+    playFanfare();
+    showToast('🎉 Событие выполнено! Бонус: ' + (justDone.reward || 'забирай!'));
+  }
+  // активные — в основном списке; выполненные и просроченные — переезжают в архив
+  const active = [], archived = [];
+  events.forEach(ev => {
+    const expired = ev.deadline && daysBetween(today, ev.deadline) < 0;
+    (ev.done || expired ? archived : active).push(ev);
+  });
+  active.sort((a,b) => b.id - a.id);
+  archived.sort((a,b) => String(b.doneDate || b.deadline || '').localeCompare(String(a.doneDate || a.deadline || '')));
+  box.innerHTML = active.length === 0
+    ? (archived.length
+        ? '<div class="muted">Активных событий нет — создай новое или загляни в архив 🏆</div>'
+        : '<div class="muted">Событий пока нет. Создай своё (как бонусы в курьерке: «доставь 60 заказов — получи приз») или жми 🎲 — соберёт цель по твоей статистике.</div>')
+    : '';
+  active.forEach(ev => box.appendChild(eventCard(ev, today, false)));
+  const wrap = document.getElementById('eventsArchiveWrap');
+  const archBox = document.getElementById('eventsArchiveList');
+  document.getElementById('archCount').textContent = archived.length;
+  wrap.style.display = archived.length ? 'block' : 'none';
+  if (archived.length) {
+    const open = localStorage.getItem(EVENTS_ARCH_KEY) === 'open';
+    archBox.style.display = open ? 'block' : 'none';
+    document.getElementById('archChevron').textContent = open ? '▾' : '▸';
+    archBox.innerHTML = '';
+    archived.forEach(ev => archBox.appendChild(eventCard(ev, today, true)));
+  }
+  updateEventPotential();
+}
+
+// ============ СКРЫТАЯ СУММА БОНУСОВ (спойлер как в Telegram) ============
+// Деньги из строки награды: «+1500 ₽» -> 1500, «+4 160» -> 4160, «шаурма» -> 0
+function eventRewardMoney(r) {
+  let sum = 0;
+  String(r || '').replace(/\d[\d\s\u00a0\u202f]*/g, m => { sum += parseInt(m.replace(/[^\d]/g, ''), 10) || 0; return m; });
+  return sum;
+}
+function updateEventPotential() {
+  const sumEl = document.getElementById('eventPotentialSum');
+  if (!sumEl) return;
+  const today = todayStr();
+  let done = 0, missed = 0, active = 0;
+  events.forEach(ev => {
+    const m = eventRewardMoney(ev.reward);
+    const expired = ev.deadline && daysBetween(today, ev.deadline) < 0;
+    if (ev.done) done += m;               // выполнено — бонус твой
+    else if (expired) missed += m;        // дедлайн прошёл, не успел — упущено
+    else active += m;                     // ещё можно успеть
+  });
+  sumEl.textContent = fmt(done + missed + active) + ' ₽';
+  const d = document.getElementById('eventPotentialDetail');
+  if (d) d.textContent = '✅ закрыто: ' + fmt(done) + ' ₽ · 😿 упущено: ' + fmt(missed) + ' ₽ · ⏳ ещё в игре: ' + fmt(active) + ' ₽';
+  // Частицы шума поверх суммы — генерируются один раз
+  const noise = document.getElementById('eventPotentialNoise');
+  if (noise && !noise.childElementCount) {
+    for (let i = 0; i < 42; i++) {
+      const dot = document.createElement('i');
+      dot.style.left = (Math.random() * 100).toFixed(1) + '%';
+      dot.style.top = (Math.random() * 100).toFixed(1) + '%';
+      dot.style.animationDelay = (Math.random() * 1.3).toFixed(2) + 's';
+      dot.style.width = dot.style.height = (2 + Math.random() * 2).toFixed(1) + 'px';
+      noise.appendChild(dot);
+    }
+  }
+}
+function eventPotentialToggle() {
+  const el = document.getElementById('eventPotential');
+  if (!el) return;
+  el.classList.toggle('revealed');
+  if (el.classList.contains('revealed')) playCoin();
+}
+function renderPiggy() {
+  const list = document.getElementById('wishesList');
+  if (!list) return;
+  const today = todayStr();
+  const st = wishStats();
+
+  // ГЛАВНАЯ ЦЕЛЬ
+  const goal = settings.goal || 0;
+  const goalPct = goal > 0 ? Math.min(100, st.kopTotal / goal * 100) : 0;
+  document.getElementById('piggyGoalFill').style.width = goalPct + '%';
+  document.getElementById('piggyGoalText').textContent = goalPct.toFixed(1) + '%';
+  document.getElementById('piggyGoalTotal').textContent = fmt(goal);
+  document.getElementById('piggyGoalHave').textContent = fmt(st.kopTotal);
+  document.getElementById('piggyGoalLeft').textContent = fmt(Math.max(0, goal - st.kopTotal));
+  const goalDl = settings.deadline ? Math.max(0, daysBetween(today, settings.deadline)) : 0;
+  document.getElementById('piggyGoalDays').textContent = settings.deadline
+    ? goalDl + ' ' + daysWord(goalDl) + ' (до ' + settings.deadline + ')' : '—';
+  const gi = document.getElementById('piggyGoalInput');
+  const di = document.getElementById('piggyDeadlineInput');
+  if (document.activeElement !== gi) gi.value = settings.goal;
+  if (document.activeElement !== di) di.value = settings.deadline || '';
+
+  document.getElementById('kopBalance').textContent = fmt(st.kopTotal);
+  document.getElementById('kopPending').textContent = fmt(entries.filter(e => e.date > today).reduce((s,e) => s + e.earned, 0));
+  document.getElementById('kopAllocated').textContent = fmt(st.allocated);
+  document.getElementById('kopSpent').textContent = fmt(st.spent);
+  document.getElementById('kopFree').textContent = fmt(st.free);
+  const allocPct = st.kopTotal > 0 ? Math.min(100, (st.allocated + st.spent) / st.kopTotal * 100) : 0;
+  document.getElementById('kopAllocFill').style.width = allocPct + '%';
+  document.getElementById('kopAllocText').textContent = 'Распределено ' + allocPct.toFixed(0) + '%';
+
+  // Темп накопления: сколько в копилку приходит в месяц в среднем
+  let pacePerMonth = 0;
+  const allDates = entries.filter(e => e.date <= today).map(e => e.date).sort();
+  if (allDates.length > 0) {
+    const monthsPassed = Math.max(1, (daysBetween(allDates[0], today) + 1) / 30.4);
+    pacePerMonth = st.kopTotal / monthsPassed;
+  }
+  document.getElementById('kopPace').textContent = fmt(pacePerMonth);
+
+  const pig = document.getElementById('piggyEmoji');
+  const status = document.getElementById('piggyStatus');
+  if (st.kopTotal === 0) {
+    pig.className = 'piggy-visual sad';
+    status.className = 'feed-status bad';
+    status.textContent = 'Копилка пустая. Запиши первый рабочий день во вкладке «Доход»!';
+  } else if (st.free > 0) {
+    pig.className = 'piggy-visual happy';
+    status.className = 'feed-status good';
+    status.textContent = 'Свободно ' + fmt(st.free) + ' ₽ — отложи их на цели!';
+  } else {
+    pig.className = 'piggy-visual';
+    status.className = 'feed-status warn';
+    status.textContent = 'Все деньги распределены по целям. Так держать!';
+  }
+
+  // Свинка растёт по мере движения к главной цели
+  const goalPctPig = settings.goal > 0 ? st.kopTotal / settings.goal * 100 : 0;
+  pig.style.fontSize = (48 + Math.min(72, goalPctPig * 0.72)).toFixed(0) + 'px';
+  document.getElementById('piggyStage').textContent = pigStageName(goalPctPig) + ' · ' + goalPctPig.toFixed(0) + '% от главной цели';
+
+  // УРОВЕНЬ КОПИТЕЛЯ
+  const lv = levelInfo(st.kopTotal);
+  document.getElementById('levelIcon').textContent = lv.cur.icon;
+  document.getElementById('levelName').textContent = lv.cur.name;
+  let lvlPct = 100;
+  let lvlLeft = 'Максимальный уровень! 🏆';
+  if (lv.next) {
+    const span = lv.next.min - lv.cur.min;
+    lvlPct = Math.min(100, (st.kopTotal - lv.cur.min) / span * 100);
+    lvlLeft = fmt(lv.next.min - st.kopTotal) + ' ₽ до «' + lv.next.name + '» ' + lv.next.icon;
+  }
+  document.getElementById('levelFill').style.width = lvlPct + '%';
+  document.getElementById('levelText').textContent = lv.next ? lvlPct.toFixed(0) + '%' : 'MAX';
+  document.getElementById('levelNext').textContent = lvlLeft;
+
+  // СТРИК
+  const curStreak = currentStreak(entries.map(e => e.date), today);
+  const bestStreak = Math.max(curStreak, calcStreak(entries.map(e => e.date)));
+  document.getElementById('streakNow').textContent = curStreak;
+  document.getElementById('streakBest').textContent = bestStreak;
+
+  // МОТИВАЦИЯ ДНЯ
+  document.getElementById('dailyPhrase').textContent = PHRASES[Math.floor(Date.now() / 86400000) % PHRASES.length];
+
+  // Празднуем новый уровень (один раз)
+  let lvlSeen = null;
+  try { lvlSeen = JSON.parse(localStorage.getItem(LEVEL_SEEN_KEY)); } catch (err) { lvlSeen = null; }
+  if (typeof lvlSeen !== 'number') {
+    localStorage.setItem(LEVEL_SEEN_KEY, JSON.stringify(lv.idx));
+  } else if (lv.idx > lvlSeen) {
+    localStorage.setItem(LEVEL_SEEN_KEY, JSON.stringify(lv.idx));
+    confettiBurst(160);
+    playFanfare();
+    showToast('⬆️ Новый уровень: ' + lv.cur.icon + ' ' + lv.cur.name + '!');
+  } else if (lv.idx < lvlSeen) {
+    localStorage.setItem(LEVEL_SEEN_KEY, JSON.stringify(lv.idx));
+  }
+
+  wishes.sort((a,b) => (a.bought === b.bought) ? a.id - b.id : (a.bought ? 1 : -1));
+  list.innerHTML = '';
+  wishes.forEach(w => {
+    const saved = w.saved || 0;
+    const pct = w.price > 0 ? Math.min(100, saved / w.price * 100) : 0;
+    const left = Math.max(0, w.price - saved);
+    const fullHrs = st.avgRate > 0 ? w.price / st.avgRate : 0;
+    let eta = '—';
+    if (left <= 0) eta = 'накоплено! 🎉';
+    else if (pacePerMonth > 0) {
+      const m = left / pacePerMonth;
+      eta = m < 1 ? 'меньше месяца' : '~' + fmtF(m, 1) + ' ' + plural(Math.round(m), 'месяц', 'месяца', 'мес.');
+    }
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (w.bought) {
+      card.style.opacity = '0.75';
+      card.innerHTML = `
+        <div class="header-row">
+          <h3>${w.emoji} ${escapeHtml(w.name)} ✅</h3>
+          <span class="del" onclick="removeWish(${w.id})">×</span>
+        </div>
+        <div class="stat"><span>Куплено:</span><b>${w.boughtDate || '—'} · ${fmt(w.price)} ₽</b></div>
+        <div class="stat"><span>Цена в часах работы:</span><b>${fullHrs > 0 ? fmtF(fullHrs, 0) + ' ' + hoursWord(fullHrs) : '—'}</b></div>
+        <div class="row" style="margin-top:8px">
+          <button class="ghost small" onclick="reopenWish(${w.id})">↩ Вернуть в планы</button>
+        </div>`;
+    } else {
+      card.innerHTML = `
+        <div class="header-row">
+          <h3>${w.emoji} ${escapeHtml(w.name)}</h3>
+          <span class="del" onclick="removeWish(${w.id})">×</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div><div class="progress-text">${pct.toFixed(0)}%</div></div>
+        <div class="stat"><span>Накоплено:</span><b>${fmt(saved)} / ${fmt(w.price)} ₽</b></div>
+        <div class="stat"><span>Осталось:</span><b>${fmt(left)} ₽</b></div>
+        <div class="stat"><span>Цена в часах работы:</span><b>${fullHrs > 0 ? fmtF(fullHrs, 0) + ' ' + hoursWord(fullHrs) : '—'}</b></div>
+        <div class="stat"><span>При темпе ${fmt(pacePerMonth)} ₽/мес:</span><b>${eta}</b></div>
+        <div class="row" style="margin-top:8px">
+          <input type="number" id="wishInput${w.id}" placeholder="Отложить, ₽" step="1" min="0">
+          <button class="small" onclick="addWishTopUp(${w.id})">Отложить</button>
+        </div>
+        <div class="quick-btns" style="margin-top:2px">
+          <button onclick="quickTopUp(${w.id}, 100)">+100</button>
+          <button onclick="quickTopUp(${w.id}, 500)">+500</button>
+          <button onclick="quickTopUp(${w.id}, 1000)">+1000</button>
+          <button onclick="quickTopUp(${w.id}, -100)">-100</button>
+          <button class="secondary" onclick="markBought(${w.id})">🎉 Куплено</button>
+        </div>`;
+    }
+    list.appendChild(card);
+  });
+  if (wishes.length === 0) {
+    list.innerHTML = '<div class="card"><div class="muted" style="text-align:center;padding:8px">Целей пока нет. Добавь первую выше 👆</div></div>';
+  }
+
+  // АЧИВКИ
+  const byDaySum = {};
+  st.earnEntries.forEach(e => { byDaySum[e.date] = (byDaySum[e.date] || 0) + e.earned; });
+  const maxDay = Object.keys(byDaySum).length > 0 ? Math.max(...Object.values(byDaySum)) : 0;
+  const streak = calcStreak(entries.map(e => e.date));
+  const daysUsing = allDates.length > 0 ? daysBetween(allDates[0], today) + 1 : 0;
+  const boughtCount = wishes.filter(w => w.bought).length;
+  const ach = [
+    { icon: '💰', name: 'Первая тысяча', hint: '1 000 ₽ в копилке', on: st.kopTotal >= 1000 },
+    { icon: '💵', name: 'Пять тысяч', hint: '5 000 ₽ в копилке', on: st.kopTotal >= 5000 },
+    { icon: '💎', name: 'Десяточка', hint: '10 000 ₽ в копилке', on: st.kopTotal >= 10000 },
+    { icon: '🏆', name: 'Рекордный день', hint: '1 500 ₽ за один день', on: maxDay >= 1500 },
+    { icon: '⏰', name: 'Полтинник', hint: '50 часов работы всего', on: st.totalHours >= 50 },
+    { icon: '🎁', name: 'Везунчик', hint: 'получить подарок или акцию', on: st.giftEntries.length > 0 },
+    { icon: '🔥', name: 'Стрик 7', hint: 'работал 7 дней подряд', on: streak >= 7 },
+    { icon: '📅', name: 'Месяц в деле', hint: 'пользоваться трекером 30 дней', on: daysUsing >= 30 },
+    { icon: '🎯', name: 'Первая цель', hint: 'купить первую цель', on: boughtCount >= 1 },
+    { icon: '🛍️', name: 'Шопоголик', hint: 'купить 3 вещи', on: boughtCount >= 3 },
+  ];
+  const achBox = document.getElementById('achGrid');
+  if (achBox) achBox.innerHTML = ach.map(a =>
+    `<div class="ach-chip ${a.on ? 'on' : ''}" title="${a.hint}">${a.icon} ${a.name}${a.on ? ' ✓' : ''}</div>`).join('');
+  document.getElementById('achCount').textContent = ach.filter(a => a.on).length + ' / ' + ach.length;
+
+  // Празднуем новые ачивки (каждая — один раз)
+  const unlockedNames = ach.filter(a => a.on).map(a => a.name);
+  let seen = null;
+  try { seen = JSON.parse(localStorage.getItem(ACH_SEEN_KEY)); } catch (err) { seen = null; }
+  if (!Array.isArray(seen)) {
+    localStorage.setItem(ACH_SEEN_KEY, JSON.stringify(unlockedNames));
+  } else {
+    const fresh = unlockedNames.filter(n => seen.indexOf(n) === -1);
+    if (fresh.length > 0) {
+      localStorage.setItem(ACH_SEEN_KEY, JSON.stringify(unlockedNames));
+      confettiBurst(120);
+      playFanfare();
+      showToast('🏅 Новая ачивка: ' + fresh.join(', '));
+    }
+  }
+}
+(function initEmojiPicks() {
+  const box = document.getElementById('emojiPicks');
+  if (box) box.innerHTML = WISH_EMOJIS.map(e => `<button type="button" onclick="setWishEmoji('${e}')">${e}</button>`).join('');
+})();
+
+// ============ КОНФЕТТИ ============
+let confettiCanvas = null, confettiCtx = null, confettiPieces = [], confettiAnim = null;
+const CONFETTI_COLORS = ['#2ecc71','#3498db','#f39c12','#e74c3c','#9b59b6','#1abc9c','#f1c40f','#fd79a8'];
+function confettiBurst(count) {
+  count = count || 160;
+  if (!confettiCanvas) {
+    confettiCanvas = document.createElement('canvas');
+    confettiCanvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:998;';
+    document.body.appendChild(confettiCanvas);
+    confettiCtx = confettiCanvas.getContext('2d');
+  }
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+  const W = confettiCanvas.width, H = confettiCanvas.height;
+  for (let i = 0; i < count; i++) {
+    const left = i % 2 === 0;
+    const x = left ? -10 : W + 10;
+    const baseAngle = left ? -Math.PI / 3 : -Math.PI + Math.PI / 3;
+    const speed = 8 + Math.random() * 8;
+    confettiPieces.push({
+      x: x, y: H * (0.72 + Math.random() * 0.25),
+      vx: Math.cos(baseAngle) * speed * (0.7 + Math.random() * 0.6),
+      vy: Math.sin(baseAngle) * speed * (0.7 + Math.random() * 0.6),
+      w: 5 + Math.random() * 7, h: 8 + Math.random() * 10,
+      c: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      rot: Math.random() * Math.PI * 2, vr: -0.15 + Math.random() * 0.3,
+      sway: Math.random() * Math.PI * 2, life: 0
+    });
+  }
+  if (!confettiAnim) confettiLoop();
+}
+function confettiLoop() {
+  confettiAnim = requestAnimationFrame(confettiLoop);
+  const W = confettiCanvas.width, H = confettiCanvas.height;
+  confettiCtx.clearRect(0, 0, W, H);
+  confettiPieces = confettiPieces.filter(p => p.y < H + 40 && p.life < 420);
+  if (confettiPieces.length === 0) {
+    cancelAnimationFrame(confettiAnim);
+    confettiAnim = null;
+    return;
+  }
+  confettiPieces.forEach(p => {
+    p.life++;
+    p.vy += 0.16;          // гравитация
+    p.vx *= 0.99;          // сопротивление воздуха
+    p.x += p.vx + Math.sin(p.sway += 0.07) * 0.7;
+    p.y += p.vy;
+    p.rot += p.vr;
+    confettiCtx.save();
+    confettiCtx.translate(p.x, p.y);
+    confettiCtx.rotate(p.rot);
+    confettiCtx.globalAlpha = Math.max(0, 1 - p.life / 420);
+    confettiCtx.fillStyle = p.c;
+    confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    confettiCtx.restore();
+  });
+}
+function pokePiggy() {
+  const pig = document.getElementById('piggyEmoji');
+  pig.style.transform = 'scale(1.25) rotate(-8deg)';
+  setTimeout(() => { pig.style.transform = ''; }, 200);
+  confettiBurst(26);
+  playPop();
+}
+function checkGoalCelebration(total) {
+  const goal = settings.goal || 0;
+  if (goal > 0 && total >= goal && localStorage.getItem(GOAL_CELEBRATED_KEY) !== String(goal)) {
+    localStorage.setItem(GOAL_CELEBRATED_KEY, String(goal));
+    confettiBurst(240);
+    playFanfare();
+    showToast('🎉 ЦЕЛЬ ДОСТИГНУТА! В копилке ' + fmt(total) + ' ₽!');
+  }
+}
+
+// ============ ФАН-ПАК: ЗВУК, УРОВНИ, СТРИК, МОТИВАЦИЯ ============
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (err) { audioCtx = null; }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (err) {} }
+  return audioCtx;
+}
+function soundEnabled() { return localStorage.getItem(SOUND_KEY) !== 'off'; }
+function toggleSound() {
+  const on = !soundEnabled();
+  if (on) localStorage.removeItem(SOUND_KEY); else localStorage.setItem(SOUND_KEY, 'off');
+  document.getElementById('soundToggle').textContent = on ? '🔊' : '🔇';
+  showToast(on ? '🔊 Звук включён' : '🔇 Звук выключен');
+  if (on) playCoin();
+}
+
+// ============ НАПОМИНАНИЯ И УСТАНОВКА (PWA) ============
+const REMIND_KEY = 'income_tracker_remind_v1';
+const REMIND_LAST_KEY = 'income_tracker_remind_last_v1';
+const PIG_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%B7%3C/text%3E%3C/svg%3E";
+let remind = JSON.parse(localStorage.getItem(REMIND_KEY) || '{"enabled":false,"time":"21:00"}');
+let deferredInstallPrompt = null;
+const REMIND_TEXTS = [
+  'Пора отметить заказы и заработок за сегодня 🛵',
+  'Свинка ждёт отчёт о смене 🐷 Отметь день!',
+  'Минута дела: запиши сегодняшнюю смену ⏱',
+  'Не дай стрику погаснуть — отметь день 🔥',
+];
+
+function remindSupported() { return 'Notification' in window; }
+function remindPermission() { return remindSupported() ? Notification.permission : 'unsupported'; }
+function isStandalone() {
+  return !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+}
+function applyThemeColor() {
+  const m = document.getElementById('metaThemeColor');
+  if (m) m.content = document.body.classList.contains('dark') ? '#121212' : '#2ecc71';
+}
+
+function renderRemind() {
+  const perm = remindPermission();
+  const marked = entries.some(e => e.date === todayStr());
+  const el = document.getElementById('remindStatus');
+  let txt;
+  if (perm === 'unsupported') txt = '⚠️ Браузер не умеет уведомления — попробуй Chrome';
+  else if (perm === 'denied') txt = '🚫 Заблокировано — разреши уведомления в настройках сайта (🔒 в адресной строке)';
+  else if (remind.enabled) {
+    txt = '🔔 Включено на ' + remind.time;
+    if (localStorage.getItem(REMIND_LAST_KEY) === todayStr()) txt += ' · сегодня уже напомнило';
+    else if (marked) txt += ' · день уже отмечен — не побеспокоит';
+  } else txt = '🔕 Выключено';
+  el.textContent = txt;
+  document.getElementById('remindToggle').textContent = remind.enabled ? '🔕 Выключить' : '🔔 Включить';
+  const t = document.getElementById('remindTime');
+  if (document.activeElement !== t) t.value = remind.time;
+}
+function saveRemind() { localStorage.setItem(REMIND_KEY, JSON.stringify(remind)); renderRemind(); }
+
+async function toggleReminder() {
+  if (remind.enabled) { remind.enabled = false; saveRemind(); showToast('🔕 Напоминание выключено'); return; }
+  if (!remindSupported()) { showToast('⚠️ Уведомления не поддерживаются этим браузером'); return; }
+  let perm = Notification.permission;
+  if (perm === 'default') {
+    try { perm = await Notification.requestPermission(); } catch (e) { perm = 'denied'; }
+  }
+  if (perm !== 'granted') { showToast('🔒 Сначала разреши уведомления в браузере'); renderRemind(); return; }
+  remind.enabled = true;
+  saveRemind();
+  showToast('🔔 Буду напоминать в ' + remind.time);
+  checkRemind();
+}
+function setRemindTime(v) { remind.time = v || '21:00'; saveRemind(); }
+
+function remindDue(now) {
+  now = now || new Date();
+  if (!remind.enabled || !remind.time) return false;
+  if (localStorage.getItem(REMIND_LAST_KEY) === todayStr()) return false; // сегодня уже напоминали
+  if (entries.some(e => e.date === todayStr())) return false;             // день уже отмечен
+  const p = String(remind.time).split(':');
+  const h = parseInt(p[0], 10) || 0, m = parseInt(p[1], 10) || 0;
+  return now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
+}
+function fireRemind(test) {
+  const body = REMIND_TEXTS[Math.floor(Math.random() * REMIND_TEXTS.length)];
+  const opts = { body: body, icon: PIG_ICON, tag: 'kopilka-remind', renotify: true, silent: !soundEnabled(), vibrate: [200, 100, 200] };
+  const fallback = () => {
+    try {
+      const n = new Notification('🐷 Копилка — отметь день!', opts);
+      n.onclick = () => { try { window.focus(); } catch (e) {} n.close(); };
+    } catch (e) {}
+  };
+  // через service worker — надёжнее и клик по уведомлению открывает Копилку (обработчик в sw.js)
+  if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+    navigator.serviceWorker.getRegistration()
+      .then(r => (r && r.showNotification) ? r.showNotification('🐷 Копилка — отметь день!', opts) : fallback())
+      .catch(fallback);
+  } else fallback();
+  try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+  if (!test) { localStorage.setItem(REMIND_LAST_KEY, todayStr()); renderRemind(); }
+  showToast('🔔 ' + body);
+}
+function checkRemind() { if (remindDue()) fireRemind(false); }
+function testNotification() {
+  if (!remindSupported()) { showToast('⚠️ Уведомления не поддерживаются'); return; }
+  if (Notification.permission !== 'granted') { toggleReminder(); return; }
+  fireRemind(true);
+}
+
+// ---- Установка на телефон (PWA) ----
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; renderInstall(); });
+window.addEventListener('appinstalled', () => { deferredInstallPrompt = null; showToast('🎉 Копилка установлена!'); renderInstall(); });
+function renderInstall() {
+  const btn = document.getElementById('installBtn');
+  const st = document.getElementById('installStatus');
+  if (isStandalone()) {
+    btn.textContent = '✅ Приложение установлено';
+    btn.disabled = true;
+    st.textContent = 'Ты в приложении: те же данные и те же обновления, что и на сайте';
+  } else {
+    btn.textContent = '📲 Установить на телефон';
+    btn.disabled = false;
+    st.textContent = deferredInstallPrompt ? 'Браузер готов установить Копилку одним нажатием'
+      : (swActive ? 'Меню ⋮ → «Установить приложение» (или «Добавить на главный экран»)' : '');
+  }
+}
+async function installApp() {
+  if (deferredInstallPrompt) {
+    const ev = deferredInstallPrompt;
+    ev.prompt();
+    try { const res = await ev.userChoice; if (res && res.outcome === 'accepted') showToast('🎉 Устанавливаю…'); } catch (e) {}
+    deferredInstallPrompt = null;
+    renderInstall();
+    return;
+  }
+  document.getElementById('installModal').classList.add('show');
+}
+function installModalBackdropClick(ev) { if (ev.target === ev.currentTarget) closeInstallHelp(); }
+function closeInstallHelp() { document.getElementById('installModal').classList.remove('show'); }
+
+// ---- Service Worker: офлайн-режим + кнопка «Установить приложение» (только на https/localhost) ----
+let swActive = false;
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => { swActive = true; renderInstall(); })
+    .catch(() => {});
+}
+function beep(freq, delay, dur, type, vol) {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  try {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type || 'square';
+    o.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+    g.gain.setValueAtTime(vol || 0.07, ctx.currentTime + delay);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + delay + dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(ctx.currentTime + delay); o.stop(ctx.currentTime + delay + dur + 0.02);
+  } catch (err) {}
+}
+function playCoin() { if (!soundEnabled()) return; beep(880, 0, 0.09); beep(1318, 0.08, 0.18); }
+function playPop() { if (!soundEnabled()) return; beep(520, 0, 0.07, 'sine', 0.05); }
+function playFanfare() {
+  if (!soundEnabled()) return;
+  beep(523, 0, 0.14); beep(659, 0.14, 0.14); beep(784, 0.28, 0.14); beep(1047, 0.42, 0.35);
+}
+
+// ---- Уровни копителя ----
+const LEVELS = [
+  { min: 0,      name: 'Новичок',       icon: '🥚' },
+  { min: 1000,   name: 'Стажёр',        icon: '🐣' },
+  { min: 5000,   name: 'Работяга',      icon: '💪' },
+  { min: 10000,  name: 'Копитель',      icon: '🐗' },
+  { min: 25000,  name: 'Мастер смен',   icon: '🥇' },
+  { min: 50000,  name: 'Копилка-профи', icon: '🚀' },
+  { min: 100000, name: 'Магнат',        icon: '👑' },
+  { min: 250000, name: 'Легенда',       icon: '🌌' },
+];
+function levelInfo(total) {
+  let idx = 0;
+  for (let i = 0; i < LEVELS.length; i++) { if (total >= LEVELS[i].min) idx = i; }
+  return { idx: idx, cur: LEVELS[idx], next: LEVELS[idx + 1] || null };
+}
+
+// ---- Стрики ----
+function currentStreak(dates, today) {
+  const set = [...new Set(dates)].sort();
+  if (set.length === 0) return 0;
+  let cursor = today;
+  if (set.indexOf(cursor) === -1) {
+    const y = new Date(today + 'T00:00:00');
+    y.setDate(y.getDate() - 1);
+    cursor = localDateStr(y);
+    if (set.indexOf(cursor) === -1) return 0;
+  }
+  let n = 0;
+  const d = new Date(cursor + 'T00:00:00');
+  while (set.indexOf(localDateStr(d)) !== -1) {
+    n++;
+    d.setDate(d.getDate() - 1);
+  }
+  return n;
+}
+
+// ---- Мотивация дня и стадии свинки ----
+const PHRASES = [
+  'Мечта не купит себя сама 💅',
+  'Каждая смена — кусочек мечты 🧩',
+  'Скидывай на мечту, а не на доставку 🍕',
+  'Сегодня поработал — завтра похвастался 📈',
+  'Курьер сегодня — магнат завтра 🚴',
+  'Не мой день? Всё равно плюс в копилку 💰',
+  'Мечты сбываются у тех, кто записывает смены 📝',
+  'Час поработал — час ближе к награде 🎮',
+  'Копилка толстеет, а ты качаешься 💪',
+  'Пропустил шаурму — купил игру 🍔',
+  'Деньги любят счёт, мечты — действия 🔥',
+  'Каждый рубль в копилке — минус одна печаль 😎',
+  'Работай так, чтобы свинка потела 🐷',
+  'Копишь не деньги, а свободу 🕊',
+  'Лучший флекс — достигнутая цель 👑',
+  'Один рубль сегодня — тысяча завтра 💎',
+  'Свинка голодная. Накорми её сменой 🐷',
+  'Твой уровень растёт быстрее, чем цены 📊',
+  'Мелочи + время = мечта 🐷',
+  'Скучно? Открой копилку и посмотри на прогресс ✨',
+];
+function pigStageName(pct) {
+  if (pct <= 0) return 'Голодная свинка';
+  if (pct < 25) return 'Поросячок';
+  if (pct < 50) return 'Подающий надежды боров';
+  if (pct < 75) return 'Упитанная свинка';
+  if (pct < 100) return 'Толстая свинка';
+  return 'Свин-миллионер';
+}
+
+// ============ ЭКСПОРТ / ИМПОРТ ============
+function exportData() {
+  const data = { entries, settings, feeds, drops, games, wishes, events, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tracker_backup_${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Резервная копия скачана');
+}
+function exportAll() { exportData(); }
+
+function importData(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.entries) entries = data.entries;
+      if (data.settings) settings = data.settings;
+      if (data.feeds) feeds = data.feeds;
+      if (data.drops) drops = data.drops;
+      if (data.games) games = data.games;
+      if (data.wishes) wishes = data.wishes;
+      if (data.events) { events = data.events; cancelEditEvent(); }
+      saveIncome();
+      saveFeeds();
+      saveDrops();
+      saveGames();
+      saveWishes();
+      saveEvents();
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      document.getElementById('weeklyPlanInput').value = settings.weeklyPlan || 3500;
+      document.getElementById('piggyGoalInput').value = settings.goal;
+      document.getElementById('piggyDeadlineInput').value = settings.deadline;
+      renderIncome();
+      renderPiggy();
+      renderChicken();
+      renderHours();
+      showToast('✅ Данные загружены');
+    } catch(err) {
+      alert('Ошибка загрузки: файл повреждён');
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+function resetAll() {
+  if (!confirm('Удалить ВСЕ записи (доход, корм, дропы, цели и события копилки)? Это необратимо.')) return;
+  entries = []; feeds = []; drops = []; games = []; wishes = []; events = [];
+  cancelEditEvent();
+  saveIncome(); saveFeeds(); saveDrops(); saveGames(); saveWishes(); saveEvents();
+  localStorage.removeItem(ACH_SEEN_KEY);
+  localStorage.removeItem(GOAL_CELEBRATED_KEY);
+  localStorage.removeItem(LEVEL_SEEN_KEY);
+  renderIncome(); renderPiggy(); renderChicken(); renderHours();
+  showToast('🗑 Все данные удалены');
+}
+
+// ============ СЕКРЕТНАЯ ПАПКА (шифрованные сохранения) ============
+const VAULT_KEY = 'income_tracker_vault_v1';
+let vaultKeyObj = null;   // CryptoKey сессии (в памяти, умирает при перезагрузке страницы)
+let vaultPinCache = null; // код сессии — нужен для расшифровки импортируемых файлов (у них своя соль)
+function vaultB64(u8) { let s = ''; for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); }
+function vaultUnb64(str) { const s = atob(str); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+function vaultLoad() { try { return JSON.parse(localStorage.getItem(VAULT_KEY) || 'null'); } catch (err) { return null; } }
+function vaultSaveData(v) { localStorage.setItem(VAULT_KEY, JSON.stringify(v)); }
+function vaultStoreOk() { return !!(window.crypto && crypto.subtle && crypto.subtle.importKey && crypto.subtle.deriveKey); }
+function snapshotData() {
+  return { entries: entries, settings: settings, feeds: feeds, drops: drops, games: games, wishes: wishes, events: events, exportedAt: new Date().toISOString() };
+}
+async function vaultDeriveKey(pin, salt) {
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey('raw', enc.encode('kopilka:' + pin), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: enc.encode(salt), iterations: 120000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function vaultEnc(key, obj) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
+  return { iv: vaultB64(iv), ct: vaultB64(new Uint8Array(ct)) };
+}
+async function vaultDec(key, blob) {
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: vaultUnb64(blob.iv) }, key, vaultUnb64(blob.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function vaultBtn() {
+  const card = document.getElementById('vaultCard');
+  card.style.display = card.style.display === 'none' ? 'block' : 'none';
+  if (card.style.display === 'block') renderVault();
+}
+function vaultShow(which) {
+  document.getElementById('vaultSetup').style.display = which === 'setup' ? 'block' : 'none';
+  document.getElementById('vaultLocked').style.display = which === 'locked' ? 'block' : 'none';
+  document.getElementById('vaultOpen').style.display = which === 'open' ? 'block' : 'none';
+}
+function renderVault() {
+  const card = document.getElementById('vaultCard');
+  if (!card) return;
+  if (!vaultStoreOk()) {
+    vaultShow('setup');
+    document.getElementById('vaultSetup').innerHTML = '<div class="muted">Шифрование недоступно в этом браузере. Открой Копилку по https-адресу или в современном браузере.</div>';
+    return;
+  }
+  const store = vaultLoad();
+  if (vaultKeyObj) {
+    const saves = store && store.saves ? store.saves : [];
+    document.getElementById('vaultList').innerHTML = saves.length === 0
+      ? '<div class="muted" style="margin:6px 0">Пока пусто. Сделай первое сохранение 👆</div>'
+      : saves.map(sv =>
+          '<div class="file-row"><div class="file-name">🗃 ' + new Date(sv.ts).toLocaleString() + '</div>' +
+          '<div class="file-btns">' +
+          '<button class="ghost mini-btn" onclick="vaultRestore(' + sv.id + ')" title="Восстановить">♻️</button>' +
+          '<button class="ghost mini-btn" onclick="vaultDownload(' + sv.id + ')" title="Скачать шифрованный файл">📤</button>' +
+          '<button class="ghost mini-btn" onclick="vaultPush(' + sv.id + ')" title="Загрузить на GitHub">☁️</button>' +
+          '<button class="ghost mini-btn" onclick="vaultDelete(' + sv.id + ')" title="Удалить">🗑</button></div></div>').join('');
+    vaultShow('open');
+    vaultRenderCloud();
+    return;
+  }
+  if (!store) {
+    document.getElementById('vaultPin1').value = '';
+    document.getElementById('vaultPin2').value = '';
+    vaultShow('setup');
+  } else {
+    document.getElementById('vaultLockedInfo').textContent = 'Зашифрованных копий: ' + (store.saves ? store.saves.length : 0) + '. Введи код, чтобы открыть.';
+    document.getElementById('vaultPin').value = '';
+    vaultShow('locked');
+  }
+}
+async function vaultCreate() {
+  const p1 = document.getElementById('vaultPin1').value.trim();
+  const p2 = document.getElementById('vaultPin2').value.trim();
+  if (!/^\d{4}$/.test(p1)) return alert('Код должен быть ровно 4 цифры');
+  if (p1 !== p2) return alert('Коды не совпадают');
+  const salt = vaultB64(crypto.getRandomValues(new Uint8Array(16)));
+  const key = await vaultDeriveKey(p1, salt);
+  const probe = await vaultEnc(key, { probe: 'kopilka' });
+  vaultSaveData({ v: 1, salt: salt, probe: probe, saves: [] });
+  vaultKeyObj = key; vaultPinCache = p1;
+  renderVault();
+  showToast('🔐 Зашифрованная резервная копия создана');
+}
+async function vaultUnlock() {
+  const store = vaultLoad();
+  if (!store) return;
+  const pin = document.getElementById('vaultPin').value.trim();
+  try {
+    const key = await vaultDeriveKey(pin, store.salt);
+    await vaultDec(key, store.probe); // неверный код → исключение
+    vaultKeyObj = key; vaultPinCache = pin;
+    renderVault();
+    showToast('🔓 Хранилище открыто');
+  } catch (err) {
+    alert('Неверный код');
+  }
+}
+function vaultLock() { vaultKeyObj = null; vaultPinCache = null; renderVault(); }
+async function vaultSnapshot() {
+  if (!vaultKeyObj) return;
+  const store = vaultLoad();
+  const blob = await vaultEnc(vaultKeyObj, snapshotData());
+  store.saves = store.saves || [];
+  store.saves.unshift({ id: Date.now(), ts: Date.now(), blob: blob });
+  vaultSaveData(store);
+  renderVault();
+  showToast('💾 Копия сохранена в зашифрованном хранилище');
+}
+function vaultApplyData(data) {
+  if (data.entries) entries = data.entries;
+  if (data.settings) settings = data.settings;
+  if (data.feeds) feeds = data.feeds;
+  if (data.drops) drops = data.drops;
+  if (data.games) games = data.games;
+  if (data.wishes) wishes = data.wishes;
+  if (data.events) { events = data.events; cancelEditEvent(); }
+  saveIncome(); saveFeeds(); saveDrops(); saveGames(); saveWishes(); saveEvents();
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  document.getElementById('weeklyPlanInput').value = settings.weeklyPlan || 3500;
+  document.getElementById('piggyGoalInput').value = settings.goal;
+  document.getElementById('piggyDeadlineInput').value = settings.deadline;
+  renderIncome(); renderPiggy(); renderChicken(); renderHours();
+}
+async function vaultRestore(id) {
+  if (!confirm('Восстановить данные из сохранения? Текущие записи будут заменены.')) return;
+  const store = vaultLoad();
+  const sv = (store.saves || []).find(s => s.id === id);
+  if (!sv) return;
+  try {
+    const data = await vaultDec(vaultKeyObj, sv.blob);
+    vaultApplyData(data);
+    showToast('♻️ Данные восстановлены из зашифрованной копии');
+  } catch (err) {
+    alert('Не удалось расшифровать сохранение');
+  }
+}
+async function vaultDownload(id) {
+  const store = vaultLoad();
+  const sv = (store.saves || []).find(s => s.id === id);
+  if (!sv) return;
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const name = 'kopilka_secret_' + localDateStr(d) + '_' + pad(d.getHours()) + pad(d.getMinutes()) + '.json';
+  const payload = { v: 1, app: 'kopilka-secret', ts: sv.ts, salt: store.salt, blob: sv.blob };
+  const bl = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(bl);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
+  showToast('📤 Шифрованный файл скачан');
+}
+function vaultImportFileClick() { document.getElementById('vaultImportFile').click(); }
+async function vaultImport(ev) {
+  const file = ev.target.files[0];
+  ev.target.value = '';
+  if (!file || !vaultKeyObj) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      let data;
+      if (parsed && parsed.app === 'kopilka-secret' && parsed.blob) {
+        const fileKey = await vaultDeriveKey(vaultPinCache, parsed.salt);
+        data = await vaultDec(fileKey, parsed.blob);
+      } else if (parsed && parsed.entries) {
+        data = parsed; // обычный (незашифрованный) JSON-бэкап — тоже можно спрятать
+      } else return alert('Это не файл сохранения Копилки');
+      const store = vaultLoad();
+      const blob = await vaultEnc(vaultKeyObj, data);
+      store.saves = store.saves || [];
+      store.saves.unshift({ id: Date.now(), ts: parsed.ts ? (Date.parse(parsed.ts) || Date.now()) : Date.now(), blob: blob });
+      vaultSaveData(store);
+      renderVault();
+      showToast('📥 Копия добавлена в хранилище');
+    } catch (err) {
+      alert('Не удалось прочитать файл (другой код или файл повреждён)');
+    }
+  };
+  reader.readAsText(file);
+}
+async function vaultDelete(id) {
+  if (!confirm('Удалить эту копию из хранилища?')) return;
+  const store = vaultLoad();
+  store.saves = (store.saves || []).filter(s => s.id !== id);
+  vaultSaveData(store);
+  renderVault();
+}
+async function vaultChangePin() {
+  const p1 = prompt('Новый код (4 цифры):');
+  if (p1 === null) return;
+  const p2 = prompt('Повтори новый код:');
+  if (p2 === null) return;
+  if (!/^\d{4}$/.test(p1) || p1 !== p2) return alert('Код должен быть 4 цифры, и обе попытки — одинаковые');
+  const store = vaultLoad();
+  const newSalt = vaultB64(crypto.getRandomValues(new Uint8Array(16)));
+  const newKey = await vaultDeriveKey(p1, newSalt);
+  const saves = [];
+  for (const sv of (store.saves || [])) {
+    const data = await vaultDec(vaultKeyObj, sv.blob);
+    saves.push({ id: sv.id, ts: sv.ts, blob: await vaultEnc(newKey, data) });
+  }
+  const probe = await vaultEnc(newKey, { probe: 'kopilka' });
+  vaultSaveData({ v: 1, salt: newSalt, probe: probe, saves: saves });
+  vaultKeyObj = newKey; vaultPinCache = p1;
+  renderVault();
+  showToast('🔁 Код изменён — все копии перешфрованы');
+}
+function vaultRemove() {
+  if (!confirm('Удалить хранилище СО ВСЕМИ зашифрованными копиями? Это необратимо.')) return;
+  if (!confirm('Точно? Копии нельзя будет вернуть.')) return;
+  localStorage.removeItem(VAULT_KEY);
+  vaultLock();
+  showToast('❌ Хранилище удалено');
+}
+
+// ============ ОБЛАКО GITHUB (закрытый репозиторий) ============
+const GH_KEY = 'income_tracker_gh_v1';
+let ghLoadedOnce = false;
+let ghBusy = false;
+function ghCfg() { try { return JSON.parse(localStorage.getItem(GH_KEY) || 'null'); } catch (err) { return null; } }
+function ghConnected() { const c = ghCfg(); return !!(c && c.user && c.repo && c.token); }
+function ghB64(str) { return btoa(unescape(encodeURIComponent(str))); }
+function ghUnb64(b64) { return decodeURIComponent(escape(atob(String(b64).replace(/\n/g, '')))); }
+function ghBase() {
+  const c = ghCfg();
+  return 'https://api.github.com/repos/' + c.user + '/' + c.repo + '/contents' + (c.dir ? '/' + c.dir.replace(/^\/+|\/+$/g, '') : '');
+}
+function ghSize(n) { return n < 1024 ? n + ' Б' : n < 1048576 ? (n / 1024).toFixed(1) + ' КБ' : (n / 1048576).toFixed(2) + ' МБ'; }
+async function ghReq(url, method, body) {
+  const c = ghCfg();
+  const res = await fetch(url, {
+    method: method,
+    headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + c.token, 'X-GitHub-Api-Version': '2022-11-28' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = null;
+  try { j = await res.json(); } catch (err) { j = null; }
+  if (!res.ok) {
+    const raw = (j && j.message) || ('HTTP ' + res.status);
+    let msg = raw;
+    if (res.status === 401) msg = 'токен неверный или устарел (401)';
+    else if (res.status === 404) msg = 'репозиторий/папка не найдены (404) — проверь логин, имя репозитория и доступ токена к нему';
+    else if (res.status === 403 && /rate limit/i.test(raw)) msg = 'лимит запросов GitHub, попробуй позже';
+    throw new Error(msg);
+  }
+  return j;
+}
+async function ghTryGet(url) {
+  try {
+    const c = ghCfg();
+    const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + c.token } });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) { return null; }
+}
+async function ghPutFile(name, text) {
+  const c = ghCfg();
+  const ex = await ghTryGet(ghBase() + '/' + encodeURIComponent(name) + '?ref=' + encodeURIComponent(c.branch || 'main'));
+  const body = { message: 'Kopilka: копия ' + name, content: ghB64(text), branch: c.branch || 'main' };
+  if (ex && ex.sha) body.sha = ex.sha;
+  return await ghReq(ghBase() + '/' + encodeURIComponent(name), 'PUT', body);
+}
+async function ghReadFile(name) {
+  const c = ghCfg();
+  const j = await ghReq(ghBase() + '/' + encodeURIComponent(name) + '?ref=' + encodeURIComponent(c.branch || 'main'), 'GET');
+  return ghUnb64(j.content);
+}
+async function ghDeleteFile(name, sha) {
+  const c = ghCfg();
+  await ghReq(ghBase() + '/' + encodeURIComponent(name), 'DELETE', { message: 'Kopilka: удалить ' + name, sha: sha, branch: c.branch || 'main' });
+}
+async function ghListFiles() {
+  const c = ghCfg();
+  const j = await ghReq(ghBase() + '?ref=' + encodeURIComponent(c.branch || 'main'), 'GET');
+  if (!Array.isArray(j)) throw new Error('папка недоступна');
+  return j.filter(f => f.type === 'file' && /\.json$/i.test(f.name));
+}
+function vaultGhOpenSetup() {
+  const c = ghCfg() || {};
+  document.getElementById('ghUser').value = c.user || '';
+  document.getElementById('ghRepo').value = c.repo || '';
+  document.getElementById('ghBranch').value = c.branch || 'main';
+  document.getElementById('ghDir').value = c.dir || 'kopilka-backups';
+  document.getElementById('ghToken').value = c.token || '';
+  document.getElementById('ghSetupMsg').textContent = '';
+  document.getElementById('ghSetup').style.display = 'block';
+}
+function ghCloseSetup() {
+  document.getElementById('ghSetup').style.display = 'none';
+  vaultRenderCloud(true);
+}
+async function ghSaveSetup() {
+  const msg = document.getElementById('ghSetupMsg');
+  const user = document.getElementById('ghUser').value.trim();
+  const repo = document.getElementById('ghRepo').value.trim();
+  const branch = document.getElementById('ghBranch').value.trim() || 'main';
+  const dir = document.getElementById('ghDir').value.trim() || 'kopilka-backups';
+  const token = document.getElementById('ghToken').value.trim();
+  if (!user || !repo || !token) { msg.textContent = '✗ Заполни логин, репозиторий и токен'; return; }
+  localStorage.setItem(GH_KEY, JSON.stringify({ user: user, repo: repo, branch: branch, dir: dir, token: token }));
+  msg.textContent = 'Проверяю подключение…';
+  try {
+    const info = await ghReq('https://api.github.com/repos/' + user + '/' + repo, 'GET');
+    if (info.private) {
+      ghLoadedOnce = false;
+      ghCloseSetup();
+      showToast('☁️ GitHub подключён: ' + info.full_name);
+    } else {
+      msg.textContent = '⚠️ Подключилось, но репозиторий ОТКРЫТЫЙ. Сделай закрытым: Settings → General → Danger Zone → Change visibility → Private, затем нажми «Сохранить и проверить» ещё раз.';
+    }
+  } catch (err) {
+    msg.textContent = '✗ ' + err.message;
+  }
+}
+function ghDisconnect() {
+  if (!confirm('Отключить облако GitHub? Файлы в репозитории останутся на месте.')) return;
+  localStorage.removeItem(GH_KEY);
+  ghLoadedOnce = false;
+  vaultRenderCloud(true);
+  showToast('☁️ Облако отключено');
+}
+async function vaultRenderCloud(force) {
+  const box = document.getElementById('ghCloud');
+  if (!box || !vaultKeyObj) return;
+  if (!ghConnected()) {
+    ghLoadedOnce = false;
+    box.innerHTML = '<div class="muted" style="margin:0 0 6px">☁️ Облако не подключено — копии живут только на этом устройстве.</div><button class="secondary" onclick="vaultGhOpenSetup()">⚙️ Подключить GitHub</button>';
+    return;
+  }
+  if (ghLoadedOnce && !force) return;
+  if (document.getElementById('ghSetup').style.display === 'block') return;
+  const c = ghCfg();
+  const head = escapeHtml(c.user + '/' + c.repo) + (c.dir ? '<span class="muted">/' + escapeHtml(c.dir) + '</span>' : '');
+  box.innerHTML = '<div class="muted gh-status" style="margin:0 0 6px">☁️ GitHub: ' + head + ' — загружаю…</div><div class="gh-list" style="margin-bottom:6px"></div>' +
+    '<div class="row"><button class="ghost" onclick="vaultCloudRefresh()">🔄 Обновить</button><button class="ghost" onclick="vaultGhOpenSetup()">⚙️ Настройки</button><button class="ghost" onclick="ghDisconnect()">✖ Отключить</button></div>';
+  try {
+    const files = await ghListFiles();
+    const list = box.querySelector('.gh-list');
+    if (!list) return;
+    box.querySelector('.gh-status').textContent = '☁️ GitHub: ' + c.user + '/' + c.repo + (c.dir ? '/' + c.dir : '') + ' — файлов: ' + files.length;
+    list.innerHTML = files.length === 0
+      ? '<div class="muted" style="margin:4px 0">Пока пусто — нажми «☁️ Копия в GitHub».</div>'
+      : files.map(f =>
+          '<div class="file-row"><div class="file-name">📄 ' + escapeHtml(f.name) + ' <span class="muted">· ' + ghSize(f.size) + '</span></div>' +
+          '<div class="file-btns">' +
+          '<button class="ghost mini-btn" onclick="vaultCloudRestore(\'' + f.name + '\')" title="Восстановить из облака">♻️</button>' +
+          '<button class="ghost mini-btn" onclick="vaultCloudDownload(\'' + f.name + '\')" title="Скачать с GitHub">📤</button>' +
+          '<button class="ghost mini-btn" onclick="vaultCloudDelete(\'' + f.name + '\',\'' + f.sha + '\')" title="Удалить с GitHub">🗑</button></div></div>').join('');
+    ghLoadedOnce = true;
+  } catch (err) {
+    ghLoadedOnce = false;
+    box.querySelector('.gh-status').textContent = '☁️ GitHub: ошибка — ' + err.message;
+  }
+}
+function vaultCloudRefresh() { vaultRenderCloud(true); }
+function ghCloudFileName(tsMs) {
+  const d = new Date(tsMs);
+  const pad = n => String(n).padStart(2, '0');
+  return 'kopilka_' + localDateStr(d) + '_' + pad(d.getHours()) + pad(d.getMinutes()) + '.json';
+}
+async function vaultCloudSave() {
+  if (!vaultKeyObj) return;
+  if (!ghConnected()) { vaultGhOpenSetup(); return; }
+  if (ghBusy) return;
+  ghBusy = true;
+  try {
+    const store = vaultLoad();
+    const blob = await vaultEnc(vaultKeyObj, snapshotData());
+    const now = Date.now();
+    const name = ghCloudFileName(now);
+    const payload = { v: 1, app: 'kopilka-secret', ts: new Date(now).toISOString(), salt: store.salt, blob: blob };
+    const text = JSON.stringify(payload, null, 2);
+    if (text.length > 900 * 1024) throw new Error('файл больше 900 КБ — GitHub API не примет');
+    await ghPutFile(name, text);
+    showToast('☁️ Копия загружена на GitHub');
+    await vaultRenderCloud(true);
+  } catch (err) {
+    alert('Не удалось загрузить копию на GitHub: ' + err.message);
+  }
+  ghBusy = false;
+}
+async function vaultPush(id) {
+  if (!vaultKeyObj) return;
+  if (!ghConnected()) { vaultGhOpenSetup(); return; }
+  const store = vaultLoad();
+  const sv = (store.saves || []).find(s => s.id === id);
+  if (!sv) return;
+  try {
+    const payload = { v: 1, app: 'kopilka-secret', ts: new Date(sv.ts).toISOString(), salt: store.salt, blob: sv.blob };
+    await ghPutFile(ghCloudFileName(sv.ts), JSON.stringify(payload, null, 2));
+    showToast('☁️ Копия загружена на GitHub');
+    await vaultRenderCloud(true);
+  } catch (err) {
+    alert('Не удалось загрузить на GitHub: ' + err.message);
+  }
+}
+async function vaultCloudRestore(name) {
+  if (!confirm('Восстановить данные из файла ' + name + ' с GitHub? Текущие записи будут заменены.')) return;
+  try {
+    const text = await ghReadFile(name);
+    const parsed = JSON.parse(text);
+    let data;
+    if (parsed && parsed.app === 'kopilka-secret' && parsed.blob) {
+      try {
+        const fileKey = await vaultDeriveKey(vaultPinCache, parsed.salt);
+        data = await vaultDec(fileKey, parsed.blob);
+      } catch (e1) {
+        const oldPin = prompt('Файл зашифрован другим кодом. Введи код этого файла (4 цифры):');
+        if (oldPin === null) return;
+        const k2 = await vaultDeriveKey(oldPin.trim(), parsed.salt);
+        data = await vaultDec(k2, parsed.blob);
+      }
+    } else if (parsed && parsed.entries) {
+      data = parsed; // незашифрованный JSON-бэкап из облака — тоже можно восстановить
+    } else return alert('Это не файл сохранения Копилки');
+    vaultApplyData(data);
+    showToast('♻️ Восстановлено с GitHub');
+  } catch (err) {
+    alert('Не удалось восстановить (неверный код, файл повреждён или ошибка сети): ' + err.message);
+  }
+}
+async function vaultCloudDownload(name) {
+  try {
+    const text = await ghReadFile(name);
+    const bl = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(bl);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+    showToast('📤 Файл скачан с GitHub');
+  } catch (err) {
+    alert('Не удалось скачать: ' + err.message);
+  }
+}
+async function vaultCloudDelete(name, sha) {
+  if (!confirm('Удалить ' + name + ' с GitHub?')) return;
+  try {
+    await ghDeleteFile(name, sha);
+    showToast('🗑 Удалено с GitHub');
+    await vaultRenderCloud(true);
+  } catch (err) {
+    alert('Не удалось удалить: ' + err.message);
+  }
+}
+
+// ============ СЕКРЕТНОЕ МЕНЮ (4 тапа по курице) и КЛЮЧ ШИФРОВАНИЯ ============
+const FILEKEY_STORE = 'kopilka_filekey_v1';
+let chickenTaps = 0, chickenTapTimer = null, secretKeyShown = false;
+function fileKeyGet() { return localStorage.getItem(FILEKEY_STORE) || ''; }
+function fileKeySet(k) { localStorage.setItem(FILEKEY_STORE, k); }
+function fileKeyGenerate() {
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // без похожих O, 0, 1, I
+  const arr = crypto.getRandomValues(new Uint8Array(20));
+  let s = '';
+  for (let i = 0; i < 20; i++) s += abc[arr[i] % abc.length];
+  return s.slice(0, 4) + '-' + s.slice(4, 8) + '-' + s.slice(8, 12) + '-' + s.slice(12, 16) + '-' + s.slice(16, 20);
+}
+function pokeChicken() {
+  const el = document.getElementById('chickenEmoji');
+  el.style.transform = 'scale(1.25) rotate(8deg)';
+  setTimeout(() => { el.style.transform = ''; }, 200);
+  chickenTaps++;
+  clearTimeout(chickenTapTimer);
+  chickenTapTimer = setTimeout(() => { chickenTaps = 0; }, 2500);
+  if (chickenTaps >= 4) {
+    chickenTaps = 0;
+    secretMenuReveal();
+  }
+}
+function secretMenuReveal() {
+  const card = document.getElementById('secretMenuCard');
+  if (!card) return;
+  if (card.style.display === 'block') {
+    card.style.display = 'none';
+    showToast('🗝 Секретное меню скрыто');
+    return;
+  }
+  card.style.display = 'block';
+  if (!fileKeyGet()) fileKeySet(fileKeyGenerate());
+  secretMenuRender();
+  switchTab('hours');
+  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
+  showToast('🗝 Секретное меню открыто');
+}
+function secretMenuRender() {
+  const k = fileKeyGet();
+  const box = document.getElementById('secretKeyBox');
+  box.textContent = secretKeyShown ? k : '••••-••••-••••-••••-••••';
+  document.getElementById('secretKeyToggleBtn').textContent = secretKeyShown ? '🙈 Скрыть' : '👁 Показать';
+}
+function secretKeyToggle() { secretKeyShown = !secretKeyShown; secretMenuRender(); }
+async function secretKeyCopy() {
+  const k = fileKeyGet();
+  try {
+    await navigator.clipboard.writeText(k);
+    showToast('📋 Ключ скопирован');
+  } catch (err) {
+    prompt('Скопируй ключ вручную (удерживай, чтобы выделить):', k);
+  }
+}
+function secretKeyCustom() {
+  const cur = fileKeyGet();
+  const k = prompt('Введи свой ключ шифрования (минимум 8 символов).\n\nВНИМАНИЕ: если в Секретной папке уже есть файлы, а ты поменяешь ключ — старые файлы не расшифровать!\n\nЗапиши новый ключ в надёжное место.', cur);
+  if (k === null) return;
+  const t = k.trim();
+  if (t.length < 8) return alert('Ключ слишком короткий — минимум 8 символов');
+  fileKeySet(t);
+  secretMenuRender();
+  fvSyncMeta();
+  showToast('🗝 Ключ обновлён — запиши его!');
+}
+
+// ============ СЕКРЕТНАЯ ПАПКА (любые файлы в GitHub, шифрованные) ============
+const FV_STORE = 'income_tracker_fv_v1';
+let fvUnlocked = false, fvBusy = false, fvListCache = null;
+function fvCfg() { try { return JSON.parse(localStorage.getItem(FV_STORE) || 'null'); } catch (err) { return null; } }
+function fvConnected() { const c = fvCfg(); return !!(c && c.user && c.repo && c.token); }
+function fvBase() {
+  const c = fvCfg();
+  return 'https://api.github.com/repos/' + c.user + '/' + c.repo + '/contents' + (c.dir ? '/' + c.dir.replace(/^\/+|\/+$/g, '') : '');
+}
+async function fvReq(url, method, body, raw) {
+  const c = fvCfg();
+  const headers = { 'Accept': raw ? 'application/vnd.github.raw' : 'application/vnd.github+json', 'Authorization': 'Bearer ' + c.token, 'X-GitHub-Api-Version': '2022-11-28' };
+  const res = await fetch(url, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined });
+  if (raw) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.arrayBuffer();
+  }
+  let j = null;
+  try { j = await res.json(); } catch (err) { j = null; }
+  if (!res.ok) {
+    const rawMsg = (j && j.message) || ('HTTP ' + res.status);
+    let msg = rawMsg;
+    if (res.status === 401) msg = 'токен неверный или устарел (401)';
+    else if (res.status === 404) msg = 'репозиторий/папка не найдены (404) — проверь имя репозитория и доступ токена к нему';
+    else if (res.status === 403 && /rate limit/i.test(rawMsg)) msg = 'лимит запросов GitHub, попробуй позже';
+    throw new Error(msg);
+  }
+  return j;
+}
+async function fvKeyHash(k) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('kopilka-filekey:' + k));
+  return vaultB64(new Uint8Array(d)).replace(/=+$/, '');
+}
+async function fvSyncMeta() {
+  if (!fvConnected() || !fileKeyGet()) return;
+  try {
+    const c = fvCfg();
+    const check = await fvKeyHash(fileKeyGet());
+    const metaBody = { message: 'Kopilka: meta', content: ghB64(JSON.stringify({ v: 1, check: check })), branch: c.branch || 'main' };
+    const ex = await (async () => { try { const j = await fvReq(fvBase() + '/' + encodeURIComponent('_meta.json') + '?ref=' + encodeURIComponent(c.branch || 'main'), 'GET'); return j && j.sha; } catch (e) { return null; } })();
+    if (ex) metaBody.sha = ex;
+    await fvReq(fvBase() + '/' + encodeURIComponent('_meta.json'), 'PUT', metaBody);
+  } catch (err) { /* не критично */ }
+}
+function fvToggle() {
+  const gate = document.getElementById('fvGate'), panel = document.getElementById('fvPanel');
+  if (fvUnlocked) {
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  } else {
+    gate.style.display = gate.style.display === 'none' ? 'block' : 'none';
+    if (gate.style.display === 'block') document.getElementById('fvKeyInput').focus();
+  }
+}
+async function fvUnlock() {
+  const k = document.getElementById('fvKeyInput').value.trim();
+  if (!k) return alert('Введи ключ шифрования');
+  const stored = fileKeyGet();
+  if (stored && k !== stored) return alert('Неверный ключ');
+  if (!stored) {
+    // на этом устройстве ключ ещё не сохранён — сверяем с меткой в репозитории, если он подключён
+    const c = fvCfg();
+    if (c && c.user && c.repo && c.token) {
+      try {
+        const j = await fvReq(fvBase() + '/' + encodeURIComponent('_meta.json') + '?ref=' + encodeURIComponent(c.branch || 'main'), 'GET');
+        const meta = JSON.parse(ghUnb64(j.content));
+        if (meta && meta.check && meta.check !== await fvKeyHash(k)) return alert('Неверный ключ');
+      } catch (err) { /* нет метки — примем ключ как новый */ }
+    }
+    fileKeySet(k);
+    fvSyncMeta();
+  }
+  fvUnlocked = true;
+  document.getElementById('fvKeyInput').value = '';
+  document.getElementById('fvGate').style.display = 'none';
+  document.getElementById('fvPanel').style.display = 'block';
+  await fvRender();
+}
+function fvLock() {
+  fvUnlocked = false;
+  document.getElementById('fvPanel').style.display = 'none';
+  showToast('🔒 Секретная папка закрыта');
+}
+function fvRefresh() { if (fvUnlocked) fvRender(); }
+function fvIcon(name) {
+  const n = name.toLowerCase();
+  if (/\.(png|jpe?g|gif|webp|bmp|heic|svg)$/.test(n)) return '🖼';
+  if (/\.(mp4|mov|avi|mkv|webm|3gp)$/.test(n)) return '🎬';
+  if (/\.(mp3|wav|ogg|m4a|flac)$/.test(n)) return '🎵';
+  if (/\.(docx?|rtf|odt|pages)$/.test(n)) return '📝';
+  if (/\.(xlsx?|csv|ods)$/.test(n)) return '📊';
+  if (/\.(pdf)$/.test(n)) return '📕';
+  if (/\.(zip|rar|7z|tar|gz)$/.test(n)) return '📦';
+  if (/\.(exe|apk|dmg|msi)$/.test(n)) return '⚙️';
+  return '📄';
+}
+async function fvListFiles() {
+  const c = fvCfg();
+  try {
+    const j = await fvReq(fvBase() + '?ref=' + encodeURIComponent(c.branch || 'main'), 'GET');
+    if (!Array.isArray(j)) throw new Error('папка недоступна');
+    fvListCache = j.filter(f => f.type === 'file' && !f.name.startsWith('_'));
+  } catch (err) {
+    if (/404/.test(err.message)) { fvListCache = []; } else { throw err; }
+  }
+  return fvListCache;
+}
+async function fvRender() {
+  const main = document.getElementById('fvMain'), setup = document.getElementById('fvSetup');
+  if (!fvConnected()) { setup.style.display = 'block'; main.style.display = 'none'; return; }
+  setup.style.display = 'none'; main.style.display = 'block';
+  const c = fvCfg();
+  const status = main.querySelector('.fv-status');
+  status.textContent = '🗂 GitHub: ' + c.user + '/' + c.repo + (c.dir ? '/' + c.dir : '') + ' — загружаю…';
+  document.getElementById('fvList').innerHTML = '';
+  try {
+    const files = await fvListFiles();
+    status.textContent = '🗂 GitHub: ' + c.user + '/' + c.repo + (c.dir ? '/' + c.dir : '') + ' — файлов: ' + files.length;
+    document.getElementById('fvList').innerHTML = files.length === 0
+      ? '<div class="muted" style="margin:4px 0">Пока пусто — нажми «➕ Добавить файлы».</div>'
+      : files.map((f, i) =>
+          '<div class="file-row"><div class="file-name">' + fvIcon(f.name) + ' ' + escapeHtml(f.name) + ' <span class="muted">· ' + ghSize(f.size) + '</span></div>' +
+          '<div class="file-btns">' +
+          '<button class="ghost mini-btn" onclick="fvDownload(' + i + ')" title="Скачать и расшифровать">📤</button>' +
+          '<button class="ghost mini-btn" onclick="fvDelete(' + i + ')" title="Удалить с GitHub">🗑</button></div></div>').join('');
+  } catch (err) {
+    status.textContent = '🗂 GitHub: ошибка — ' + err.message;
+  }
+}
+async function fvMakePayload(file) {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode('kopilka-file:' + fileKeyGet()), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: 120000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, buf));
+  return JSON.stringify({ v: 1, app: 'kopilka-vault-file', name: file.name, mime: file.type || 'application/octet-stream', size: file.size, ts: new Date().toISOString(), salt: vaultB64(salt), iv: vaultB64(iv), blob: vaultB64(ct) });
+}
+async function fvUpload(ev) {
+  const files = Array.from(ev.target.files || []);
+  ev.target.value = '';
+  if (!files.length || !fvUnlocked || fvBusy) return;
+  fvBusy = true;
+  const prog = document.getElementById('fvProgress');
+  let ok = 0, fail = 0, skip = 0;
+  try {
+    let existing = {};
+    try { (await fvListFiles()).forEach(f => { existing[f.name] = f.sha; }); } catch (err) {}
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      prog.textContent = '⏳ Шифрую и загружаю ' + (i + 1) + '/' + files.length + ': ' + f.name + (f.size >= 1048576 ? ' (' + Math.round(f.size / 1048576) + ' МБ)' : '') + '…';
+      if (f.size > 30 * 1024 * 1024 && !confirm('Файл ' + f.name + ' — ' + Math.round(f.size / 1048576) + ' МБ. Такой большой файл на телефоне может не загрузиться (не хватит памяти), а на GitHub будет качаться долго. Продолжить?')) { skip++; continue; }
+      try {
+        if (f.size > 90 * 1024 * 1024) throw new Error('файл больше 90 МБ — GitHub принимает файлы только до 100 МБ');
+        const payload = await fvMakePayload(f);
+        const body = { message: 'Kopilka: файл ' + f.name, content: ghB64(payload), branch: fvCfg().branch || 'main' };
+        if (existing[f.name]) body.sha = existing[f.name];
+        await fvReq(fvBase() + '/' + encodeURIComponent(f.name), 'PUT', body);
+        ok++;
+      } catch (err) {
+        fail++;
+        alert('✗ ' + f.name + ': ' + err.message);
+      }
+    }
+    prog.textContent = '';
+    if (ok || skip) showToast('☁️ Загружено файлов: ' + ok + (fail ? ' · с ошибкой: ' + fail : '') + (skip ? ' · пропущено: ' + skip : ''));
+    await fvRender();
+  } finally {
+    fvBusy = false;
+  }
+}
+async function fvDownload(i) {
+  const f = (fvListCache || [])[i];
+  if (!f || fvBusy) return;
+  fvBusy = true;
+  const prog = document.getElementById('fvProgress');
+  prog.textContent = '⏳ Скачиваю и расшифровываю: ' + f.name + '…';
+  try {
+    const buf = await fvReq(fvBase() + '/' + encodeURIComponent(f.name) + '?ref=' + encodeURIComponent(fvCfg().branch || 'main'), 'GET', null, true);
+    const parsed = JSON.parse(new TextDecoder().decode(buf));
+    if (!parsed || parsed.app !== 'kopilka-vault-file' || !parsed.blob) throw new Error('неизвестный формат файла');
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode('kopilka-file:' + fileKeyGet()), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: vaultUnb64(parsed.salt), iterations: 120000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: vaultUnb64(parsed.iv) }, key, vaultUnb64(parsed.blob));
+    const bl = new Blob([pt], { type: parsed.mime || 'application/octet-stream' });
+    const url = URL.createObjectURL(bl);
+    const a = document.createElement('a');
+    a.href = url; a.download = parsed.name || f.name; a.click();
+    URL.revokeObjectURL(url);
+    showToast('📤 Файл расшифрован и скачан');
+  } catch (err) {
+    alert('Не удалось скачать/расшифровать: ' + err.message);
+  }
+  prog.textContent = '';
+  fvBusy = false;
+}
+async function fvDelete(i) {
+  const f = (fvListCache || [])[i];
+  if (!f) return;
+  if (!confirm('Удалить ' + f.name + ' с GitHub? Восстановить нельзя.')) return;
+  try {
+    await fvReq(fvBase() + '/' + encodeURIComponent(f.name), 'DELETE', { message: 'Kopilka: удалить ' + f.name, sha: f.sha, branch: fvCfg().branch || 'main' });
+    showToast('🗑 Удалено с GitHub');
+    await fvRender();
+  } catch (err) {
+    alert('Не удалось удалить: ' + err.message);
+  }
+}
+function fvOpenSetup() {
+  const c = fvCfg() || {};
+  document.getElementById('fvUser').value = c.user || '';
+  document.getElementById('fvRepo').value = c.repo || '';
+  document.getElementById('fvBranch').value = c.branch || 'main';
+  document.getElementById('fvDir').value = c.dir || 'secret-files';
+  document.getElementById('fvToken').value = c.token || '';
+  document.getElementById('fvSetupMsg').textContent = '';
+  document.getElementById('fvSetup').style.display = 'block';
+  document.getElementById('fvMain').style.display = 'none';
+}
+function fvCloseSetup() {
+  document.getElementById('fvSetup').style.display = 'none';
+  fvRender();
+}
+async function fvSaveSetup() {
+  const msg = document.getElementById('fvSetupMsg');
+  const user = document.getElementById('fvUser').value.trim();
+  const repo = document.getElementById('fvRepo').value.trim();
+  const branch = document.getElementById('fvBranch').value.trim() || 'main';
+  const dir = document.getElementById('fvDir').value.trim() || 'secret-files';
+  const token = document.getElementById('fvToken').value.trim();
+  if (!user || !repo || !token) { msg.textContent = '✗ Заполни логин, репозиторий и токен'; return; }
+  localStorage.setItem(FV_STORE, JSON.stringify({ user: user, repo: repo, branch: branch, dir: dir, token: token }));
+  msg.textContent = 'Проверяю подключение…';
+  try {
+    const info = await fvReq('https://api.github.com/repos/' + user + '/' + repo, 'GET');
+    if (!info.private) {
+      msg.textContent = '⚠️ Подключилось, но репозиторий ОТКРЫТЫЙ. Сделай закрытым: Settings → General → Danger Zone → Change visibility → Private, затем нажми «Сохранить и проверить» ещё раз.';
+      return;
+    }
+    await fvSyncMeta();
+    showToast('🗂 Секретная папка подключена: ' + info.full_name);
+    await fvRender();
+  } catch (err) {
+    msg.textContent = '✗ ' + err.message;
+  }
+}
+function fvDisconnect() {
+  if (!confirm('Отключить репозиторий от Секретной папки? Сами файлы останутся на GitHub.')) return;
+  localStorage.removeItem(FV_STORE);
+  fvListCache = null;
+  fvRender();
+  showToast('✖ Репозиторий отключён');
+}
+
+// ============ ИНИЦИАЛИЗАЦИЯ ============
+document.getElementById('date').value = todayStr();
+document.getElementById('feedDate').value = todayStr();
+document.getElementById('weeklyPlanInput').value = settings.weeklyPlan || 3500;
+document.getElementById('piggyGoalInput').value = settings.goal;
+document.getElementById('piggyDeadlineInput').value = settings.deadline;
+document.getElementById('soundToggle').textContent = soundEnabled() ? '🔊' : '🔇';
+if (localStorage.getItem(THEME_KEY) === 'dark') {
+  document.body.classList.add('dark');
+  document.getElementById('themeToggle').textContent = '☀️';
+}
+
+let lastActiveDate = todayStr();
+function checkDateRollover() {
+  const d = todayStr();
+  if (d !== lastActiveDate) {
+    lastActiveDate = d;
+    renderIncome(); renderPiggy(); renderChicken(); renderHours();
+    renderRemind();
+    const esNew = document.getElementById('eventStart');
+    if (esNew && document.activeElement !== esNew) esNew.value = d;
+    showToast('📅 Новый день — списки обновлены');
+  }
+}
+setInterval(checkDateRollover, 60000);
+document.addEventListener('visibilitychange', checkDateRollover);
+
+renderRemind();
+renderInstall();
+applyThemeColor();
+checkRemind(); // если время напоминания уже прошло, а день не отмечен — напомнить сразу при открытии
+setInterval(checkRemind, 30000);
+
+const savedTab = localStorage.getItem(ACTIVE_TAB_KEY) || 'income';
+switchTab(savedTab);
+renderIncome();
+renderPiggy();
+renderChicken();
+renderHours();
+calcInit();
+</script>
+</body>
+</html>
