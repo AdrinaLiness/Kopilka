@@ -155,7 +155,7 @@
   <button class="tab active" data-page="income" onclick="switchTab('income')">💰 Доход</button>
   <button class="tab" data-page="piggy" onclick="switchTab('piggy')">🐷 Копилка</button>
   <button class="tab" data-page="chicken" onclick="switchTab('chicken')">🐔 Корм</button>
-  <button class="tab" data-page="drops" onclick="switchTab('drops')">🎁 Дропы</button>
+  <button class="tab" data-page="server" onclick="switchTab('server')">🖥 Сервер</button>
   <button class="tab" data-page="hours" onclick="switchTab('hours')">⏱ Накрутка</button>
 </div>
 
@@ -567,54 +567,40 @@
 
 </div><!-- /page-chicken -->
 
-<!-- ============ ЛИСТ 3: ДРОПЫ ============ -->
-<div class="page" id="page-drops">
+<!-- ============ ЛИСТ 3: СЕРВЕР (ФИЛЬМЫ) ============ -->
+<div class="page" id="page-server">
 
   <div class="card">
-    <h3>🎁 Добавить дроп</h3>
+    <h3 id="srvNowTitle">🎬 Плеер</h3>
+    <video id="srvVideo" controls playsinline style="width:100%;border-radius:10px;background:#000;display:none;max-height:60vh"></video>
+    <div id="srvHint" class="muted">Выбери фильм с телефона или с сервера на ПК — он откроется здесь. Позиция просмотра запоминается автоматически.</div>
+  </div>
+
+  <div class="card">
+    <h3>📱 Фильмы с телефона</h3>
+    <div class="muted" style="margin-bottom:8px">Скачал фильм в Zona? Жми кнопку и выбери файл — он сыграет прямо с телефона, никуда не загружается и без всякой настройки.</div>
+    <input type="file" id="srvLocalInput" accept="video/*,.mkv" multiple style="display:none" onchange="srvLocalPick(event)">
+    <button onclick="document.getElementById('srvLocalInput').click()">📁 Выбрать видео с телефона</button>
+    <div id="srvLocalList" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h3>📡 Сервер на ПК</h3>
+    <div class="muted" style="margin-bottom:8px">Библиотека фильмов на компьютере: запусти на ПК <b>media_server.py</b> в папке с фильмами — и смотри их здесь по Wi-Fi, с перемоткой.</div>
     <div class="row">
-      <input type="date" id="dropDate">
-      <input type="text" id="dropName" placeholder="Название предмета (AWP | Dragon Lore)">
+      <input type="text" id="srvUrl" placeholder="https://192.168.1.5:8899" autocomplete="off" style="min-width:0;flex:1">
+      <button onclick="srvConnect()">🔌 Подключить</button>
     </div>
-    <div class="row">
-      <input type="number" id="dropPrice" placeholder="Цена, ₽" step="1" min="0">
-      <input type="text" id="dropSource" list="sourceList" placeholder="Источник" value="Weekly">
-      <datalist id="sourceList">
-        <option value="Weekly">
-        <option value="Операция">
-        <option value="Кейс">
-        <option value="Trade">
-        <option value="Продажа">
-      </datalist>
-    </div>
-    <button onclick="addDrop()">Добавить дроп</button>
+    <div class="muted" id="srvStatus" style="margin-top:6px"></div>
+    <div id="srvList" style="margin-top:8px"></div>
   </div>
 
   <div class="card">
-    <h3>📊 Статистика дропов</h3>
-    <div class="stat"><span>Всего дропов:</span><b><span id="totalDrops">0</span></b></div>
-    <div class="stat"><span>Общая стоимость:</span><b><span id="totalDropValue">0</span> ₽</b></div>
-    <div class="stat"><span>Средний дроп:</span><b><span id="avgDrop">0</span> ₽</b></div>
-    <div class="stat"><span>Лучший дроп:</span><b><span id="bestDrop">—</span></b></div>
+    <h3>❓ Как запустить сервер на ПК</h3>
+    <div class="muted" style="line-height:1.6">1. Возьми файл <b>media_server.py</b> из архива с этой программой.<br>2. Положи его в папку с фильмами на ПК.<br>3. Установи Python с python.org (при установке отметь галочку «Add to PATH»).<br>4. Запусти файл двойным кликом — он покажет адрес вида <b>https://192.168.x.x:8899</b>.<br>5. Открой этот адрес в Chrome на телефоне ОДИН раз и прими предупреждение («Дополнительно» → «Перейти на сайт»).<br>6. Вернись сюда, введи адрес и жми «Подключить».<br><br>⚠️ Телефон и ПК должны быть в одном Wi-Fi. Фильмы в GitHub не залить (лимит 100 МБ), поэтому для них — сервер. Kopilka-files не удаляй: он по-прежнему нужен для документов и фото.</div>
   </div>
 
-  <div class="card">
-    <h3>📅 Дропы по месяцам</h3>
-    <table id="dropsMonthlyTable">
-      <thead><tr><th>Месяц</th><th>Кол-во</th><th>Стоимость ₽</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <h3>📝 Все дропы</h3>
-    <table id="dropsTable">
-      <thead><tr><th>Дата</th><th>Предмет</th><th>Источник</th><th>₽</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-</div><!-- /page-drops -->
+</div><!-- /page-server -->
 
 <!-- ============ ЛИСТ 4: НАКРУТКА ЧАСОВ ============ -->
 <div class="page" id="page-hours">
@@ -761,7 +747,7 @@ function switchTab(name) {
   if (name === 'income') renderIncome();
   if (name === 'piggy') renderPiggy();
   if (name === 'chicken') renderChicken();
-  if (name === 'drops') renderDrops();
+  if (name === 'server') renderServer();
   if (name === 'hours') renderHours();
 }
 
@@ -1243,64 +1229,152 @@ function renderChicken() {
   }
 }
 
-// ============ ДРОПЫ ============
-function addDrop() {
-  const date = document.getElementById('dropDate').value;
-  const name = (document.getElementById('dropName').value || '').trim();
-  const price = parseFloat(document.getElementById('dropPrice').value) || 0;
-  const source = (document.getElementById('dropSource').value || '').trim() || 'Weekly';
-  if (!date) return alert('Укажи дату');
-  if (!name) return alert('Укажи название предмета');
-  drops.push({ id: Date.now(), date, name, price, source });
-  saveDrops();
-  document.getElementById('dropName').value = '';
-  document.getElementById('dropPrice').value = '';
-  renderDrops();
-  showToast('🎁 Дроп добавлен: ' + name);
-}
-function removeDrop(id) {
-  if (!confirm('Удалить дроп?')) return;
-  drops = drops.filter(d => d.id !== id);
-  saveDrops();
-  renderDrops();
-}
-function renderDrops() {
-  drops.sort((a,b) => a.date.localeCompare(b.date));
-  const tbody = document.querySelector('#dropsTable tbody');
-  tbody.innerHTML = '';
-  drops.slice().reverse().forEach(d => {
-    tbody.innerHTML += `<tr><td>${d.date}</td><td>${d.name}</td>
-      <td><span class="cat-tag">${d.source}</span></td><td>${fmt(d.price)}</td>
-      <td><span class="del" onclick="removeDrop(${d.id})">×</span></td></tr>`;
-  });
-  if (drops.length === 0) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888">Дропов пока нет</td></tr>';
+// ============ СЕРВЕР (ФИЛЬМЫ) ============
+const SRV_STORE = 'income_tracker_srv_v1';
+const SRV_POS = 'income_tracker_srvpos_v1';
+const SRV_BAD_EXT = ['avi','wmv','ts','flv','mpg','mpeg','vob','3gp'];
+let srvFiles = [];        // [{name,size,playable}] с сервера
+let srvLocalFiles = [];   // File[] выбранные с телефона
+let srvObjUrl = null;
+let srvCurKey = null;
+let srvSaveT = 0;
 
-  const totalValue = drops.reduce((s,d) => s + d.price, 0);
-  const avg = drops.length > 0 ? totalValue / drops.length : 0;
-  document.getElementById('totalDrops').textContent = drops.length;
-  document.getElementById('totalDropValue').textContent = fmt(totalValue);
-  document.getElementById('avgDrop').textContent = fmt(avg);
-  if (drops.length > 0) {
-    const best = drops.reduce((a,b) => a.price > b.price ? a : b);
-    document.getElementById('bestDrop').textContent = best.name + ' (' + fmt(best.price) + ' ₽)';
-  } else {
-    document.getElementById('bestDrop').textContent = '—';
+function srvCfg(){ try { return JSON.parse(localStorage.getItem(SRV_STORE) || '{}'); } catch(e) { return {}; } }
+function srvPosMap(){ try { return JSON.parse(localStorage.getItem(SRV_POS) || '{}'); } catch(e) { return {}; } }
+function srvMB(n){ if (n >= 1073741824) return (n/1073741824).toFixed(2) + ' ГБ'; if (n >= 1048576) return Math.round(n/1048576) + ' МБ'; return Math.max(1, Math.round(n/1024)) + ' КБ'; }
+function srvHms(t){ t = Math.max(0, Math.floor(t)); const h = Math.floor(t/3600), m = Math.floor((t%3600)/60), sec = t%60; return (h ? h + ':' + String(m).padStart(2,'0') : String(m)) + ':' + String(sec).padStart(2,'0'); }
+function srvKey(kind, id){ return kind + '|' + id; }
+function srvPosBadge(key){
+  const p = srvPosMap()[key];
+  if (!p || p.t <= 5) return '';
+  if (p.d && p.t >= p.d - 30) return ' · ✓ просмотрено';
+  return ' · ▶ ' + srvHms(p.t) + (p.d ? ' / ' + srvHms(p.d) : '');
+}
+function srvSaveUrl(url){ localStorage.setItem(SRV_STORE, JSON.stringify({ url: url })); }
+
+function renderServer(){
+  const c = srvCfg();
+  if (c.url) {
+    document.getElementById('srvUrl').value = c.url;
+    if (!srvFiles.length) srvConnect(true);
   }
-
-  const byMonth = {};
-  drops.forEach(d => {
-    const m = monthKey(d.date);
-    if (!byMonth[m]) byMonth[m] = { count: 0, value: 0 };
-    byMonth[m].count++;
-    byMonth[m].value += d.price;
-  });
-  const mtbody = document.querySelector('#dropsMonthlyTable tbody');
-  mtbody.innerHTML = '';
-  Object.keys(byMonth).forEach(m => {
-    mtbody.innerHTML += `<tr><td>${m}</td><td>${byMonth[m].count}</td><td>${fmt(byMonth[m].value)}</td></tr>`;
-  });
-  if (Object.keys(byMonth).length === 0) mtbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#888">Нет данных</td></tr>';
+  srvRenderList();
+  srvRenderLocal();
 }
+
+async function srvConnect(silent){
+  const inp = document.getElementById('srvUrl');
+  const st = document.getElementById('srvStatus');
+  let url = (inp.value || '').trim().replace(/\/+$/, '');
+  if (!url) { if (!silent) st.textContent = 'Введи адрес сервера — он показан в окне media_server.py'; return; }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  if (!/^https:/i.test(url) && location.protocol === 'https:') {
+    st.innerHTML = '⚠️ Копилка открыта по https, поэтому и сервер должен быть <b>https://</b> — не убирай эти буквы.';
+    return;
+  }
+  if (!silent) st.textContent = '⏳ Подключаюсь…';
+  const ctl = new AbortController();
+  const tmr = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const res = await fetch(url + '/api/list', { signal: ctl.signal, cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!data || !Array.isArray(data.files)) throw new Error('bad');
+    srvFiles = data.files;
+    srvSaveUrl(url);
+    inp.value = url;
+    st.textContent = '✅ Подключено · папка «' + (data.folder || '?') + '» · фильмов: ' + srvFiles.length;
+  } catch (err) {
+    srvFiles = [];
+    const slow = !!(err && err.name === 'AbortError');
+    st.innerHTML = '✗ Не удалось подключиться.<br>1) media_server.py запущен на ПК? Телефон и ПК в одном Wi-Fi?<br>2) Открой адрес <b>' + url + '</b> в Chrome на телефоне ОДИН раз и прими предупреждение о сертификате («Дополнительно» → «Перейти на сайт»), затем снова жми «Подключить».' + (slow ? '<br>(сервер не ответил за 8 секунд)' : '');
+  } finally { clearTimeout(tmr); }
+  srvRenderList();
+}
+
+function srvRow(name, size, playable, onclickExpr, key){
+  return '<div class="stat"><span style="min-width:0;word-break:break-all">🎬 ' + escapeHtml(name) +
+    ' <span class="muted">· ' + srvMB(size) + srvPosBadge(key) + '</span></span>' +
+    '<span style="white-space:nowrap;flex-shrink:0">' +
+    (playable
+      ? '<button class="ghost" style="padding:2px 8px" onclick="' + onclickExpr + '" title="Смотреть">▶</button>'
+      : '<span class="muted" style="font-size:12px">в mp4</span>') +
+    '</span></div>';
+}
+function srvRenderList(){
+  const box = document.getElementById('srvList');
+  if (!srvFiles.length) { box.innerHTML = ''; return; }
+  const c = srvCfg();
+  box.innerHTML = srvFiles.map((f, i) =>
+    srvRow(f.name, f.size, f.playable, 'srvPlaySrv(' + i + ')', srvKey('S', (c.url || '') + '|' + f.name))).join('');
+}
+function srvRenderLocal(){
+  const box = document.getElementById('srvLocalList');
+  if (!srvLocalFiles.length) { box.innerHTML = ''; return; }
+  box.innerHTML = srvLocalFiles.map((f, i) =>
+    srvRow(f.name, f.size, !SRV_BAD_EXT.includes((f.name.split('.').pop() || '').toLowerCase()), 'srvPlayLocal(' + i + ')', srvKey('L', f.name + '|' + f.size))).join('');
+}
+
+function srvLocalPick(ev){
+  srvLocalFiles = Array.from(ev.target.files || []);
+  ev.target.value = '';
+  srvRenderLocal();
+}
+function srvPlayLocal(i){
+  const f = srvLocalFiles[i];
+  if (!f) return;
+  srvSetVideo(URL.createObjectURL(f), f.name, srvKey('L', f.name + '|' + f.size), true);
+}
+function srvPlaySrv(i){
+  const f = srvFiles[i];
+  const c = srvCfg();
+  if (!f || !c.url) return;
+  srvSetVideo(c.url + '/play/' + encodeURIComponent(f.name), f.name, srvKey('S', c.url + '|' + f.name), false);
+}
+
+function srvSetVideo(src, title, key, isBlob){
+  const v = document.getElementById('srvVideo');
+  if (srvObjUrl && srvObjUrl !== src) URL.revokeObjectURL(srvObjUrl);
+  srvObjUrl = isBlob ? src : null;
+  if (key !== srvCurKey) {
+    srvCurKey = key;
+    v.src = src;
+    const p = srvPosMap()[key];
+    if (p && p.t > 5) {
+      v.onloadedmetadata = () => { try { if (!v.duration || p.t < v.duration - 3) v.currentTime = p.t; } catch(e) {} };
+    } else {
+      v.onloadedmetadata = null;
+    }
+  }
+  document.getElementById('srvNowTitle').textContent = '🎬 ' + title;
+  v.style.display = 'block';
+  document.getElementById('srvHint').style.display = 'none';
+  v.play().catch(() => {});
+}
+
+(function(){
+  const v = document.getElementById('srvVideo');
+  if (!v) return;
+  v.addEventListener('timeupdate', () => {
+    if (!srvCurKey || !v.currentTime) return;
+    const now = Date.now();
+    if (now - srvSaveT < 3000) return;
+    srvSaveT = now;
+    const m = srvPosMap();
+    m[srvCurKey] = { t: Math.floor(v.currentTime), d: Math.floor(v.duration || 0) };
+    const keys = Object.keys(m);
+    if (keys.length > 200) delete m[keys[0]];
+    localStorage.setItem(SRV_POS, JSON.stringify(m));
+  });
+  v.addEventListener('ended', () => {
+    if (!srvCurKey) return;
+    const m = srvPosMap();
+    delete m[srvCurKey];
+    localStorage.setItem(SRV_POS, JSON.stringify(m));
+    srvRenderList();
+    srvRenderLocal();
+  });
+})();
 
 // ============ НАКРУТКА ЧАСОВ ============
 function escapeHtml(s) {
@@ -2243,7 +2317,7 @@ function importData(ev) {
       renderIncome();
       renderPiggy();
       renderChicken();
-      renderDrops();
+      renderServer();
       renderHours();
       showToast('✅ Данные загружены');
     } catch(err) {
@@ -2260,7 +2334,7 @@ function resetAll() {
   localStorage.removeItem(ACH_SEEN_KEY);
   localStorage.removeItem(GOAL_CELEBRATED_KEY);
   localStorage.removeItem(LEVEL_SEEN_KEY);
-  renderIncome(); renderPiggy(); renderChicken(); renderDrops(); renderHours();
+  renderIncome(); renderPiggy(); renderChicken(); renderServer(); renderHours();
   showToast('🗑 Все данные удалены');
 }
 
@@ -2385,7 +2459,7 @@ function vaultApplyData(data) {
   document.getElementById('weeklyPlanInput').value = settings.weeklyPlan || 3500;
   document.getElementById('piggyGoalInput').value = settings.goal;
   document.getElementById('piggyDeadlineInput').value = settings.deadline;
-  renderIncome(); renderPiggy(); renderChicken(); renderDrops(); renderHours();
+  renderIncome(); renderPiggy(); renderChicken(); renderServer(); renderHours();
 }
 async function vaultRestore(id) {
   if (!confirm('Восстановить данные из сохранения? Текущие записи будут заменены.')) return;
@@ -3032,7 +3106,6 @@ function fvDisconnect() {
 // ============ ИНИЦИАЛИЗАЦИЯ ============
 document.getElementById('date').value = todayStr();
 document.getElementById('feedDate').value = todayStr();
-document.getElementById('dropDate').value = todayStr();
 document.getElementById('weeklyPlanInput').value = settings.weeklyPlan || 3500;
 document.getElementById('piggyGoalInput').value = settings.goal;
 document.getElementById('piggyDeadlineInput').value = settings.deadline;
@@ -3047,7 +3120,7 @@ function checkDateRollover() {
   const d = todayStr();
   if (d !== lastActiveDate) {
     lastActiveDate = d;
-    renderIncome(); renderPiggy(); renderChicken(); renderDrops(); renderHours();
+    renderIncome(); renderPiggy(); renderChicken(); renderServer(); renderHours();
     renderRemind();
     const esNew = document.getElementById('eventStart');
     if (esNew && document.activeElement !== esNew) esNew.value = d;
@@ -3068,7 +3141,7 @@ switchTab(savedTab);
 renderIncome();
 renderPiggy();
 renderChicken();
-renderDrops();
+renderServer();
 renderHours();
 </script>
 </body>
