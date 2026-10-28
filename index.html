@@ -567,6 +567,11 @@
       </div>
     </div>
   </div>
+
+<!-- 🪦 Памятник курице — тихая строка в конце вкладки «Копилка» (видна, только когда курицы нет) -->
+  <div id="chickenMemorial" onclick="memorialClick()" title="Памятник курице" style="display:none;text-align:center;padding:9px 12px;margin:0 0 10px;border:1px dashed var(--input-border);border-radius:12px;color:var(--muted);font-size:12px;cursor:pointer;user-select:none">
+    🪦 <span id="memorialLine">Здесь жила курица</span>
+  </div>
   </div><!-- /page-piggy -->
 
 <!-- ============ ЛИСТ 2: КОРМ ============ -->
@@ -661,7 +666,7 @@
     <div class="row" style="margin-top:6px">
       <button class="ghost" onclick="secretKeyCustom()">✏️ Ввести свой ключ</button>
     </div>
-    <div class="muted" style="margin-top:8px">Это меню открывается 4 тапами по курице 🐔 (вкладка «Корм») или кнопкой «🗝 Показать ключ» в Секретной папке (вкладка «Копилка»).</div>
+    <div class="muted" style="margin-top:8px">Это меню открывается 4 тапами по курице 🐔 (вкладка «Корм»), 4 тапами по памятнику 🪦 в конце вкладки «Копилка» (когда курицы уже нет) или кнопкой «🗝 Показать ключ» в Секретной папке.</div>
   </div>
 
 </div><!-- /page-hours -->
@@ -681,6 +686,22 @@
     <div class="muted" style="margin-top:6px">Нет своего сайта? Перетащи оба файла в папке на <b>netlify.com/drop</b> — получишь ссылку и сможешь установить приложение.</div>
     <div class="muted" style="margin-top:6px">«Приложение» — это тот же файл: любые обновления index.html сразу появляются и на сайте, и в приложении. Данные хранятся в браузере телефона и никуда не пропадают.</div>
     <button class="secondary" onclick="closeInstallHelp()" style="margin-top:12px">Понятно 👍</button>
+  </div>
+</div>
+
+<!-- 🪦 Модалка памятника курице -->
+<div class="modal-backdrop" id="memorialModal" onclick="memorialBackdropClick(event)">
+  <div class="modal-card" style="text-align:center">
+    <div style="font-size:44px;line-height:1.2">🪦</div>
+    <h3 style="margin:4px 0 2px">Памятник курице</h3>
+    <div class="muted" id="memorialEpitaph" style="margin-bottom:10px">—</div>
+    <div class="stat"><span>Жила (от первого корма):</span><b><span id="memorialFrom">—</span> → <span id="memorialTo">—</span></b></div>
+    <div class="stat"><span>Прожила:</span><b><span id="memorialAge">0</span> дн.</b></div>
+    <div class="stat"><span>Корма получено за жизнь:</span><b><span id="memorialFeeds">0</span> 🍗</b></div>
+    <div class="stat"><span>Дней покрыто кормом:</span><b><span id="memorialDays">0</span></b></div>
+    <div class="muted" id="memorialQuote" style="margin-top:10px;font-style:italic">—</div>
+    <div class="muted" style="margin-top:6px">Памятник стоит в конце вкладки «Копилка», пока курицы нет. Заведёшь новую — выдашь корм, и вкладка «Корм» вернётся.</div>
+    <button class="secondary" onclick="document.getElementById('memorialModal').classList.remove('show')" style="margin-top:12px">Спокойной ночи 🌙</button>
   </div>
 </div>
 
@@ -1282,8 +1303,86 @@ function applyChickenLife() {
     if (tabBtn) tabBtn.style.display = '';
     localStorage.removeItem(CHICKEN_GONE_KEY);
   }
+  memorialUpdate();
   return gone;
 }
+
+// ============ 🪦 ПАМЯТНИК КУРИЦЕ ============
+// Когда курицы больше нет, вкладка «Корм» скрыта, а в конце вкладки «Копилка»
+// навсегда остаётся тихая строка-памятник: тап — эпитафия, 4 быстрых тапа —
+// секретное меню (как раньше 4 тапа по живой курице).
+const MEMORIAL_QUOTES = {
+  retired: [
+    'Прожила все ~140 дней без единого пропуска. Ушла красиво — на пенсию, к Valve 🌤',
+    '20 недель добросовестного кудахтанья. Теперь несёт яйца где-то в облаке 🌤',
+    'Пенсия заслужена. Half-Life 3 к её приходу так и не вышел, но она всё равно ждёт 🌤'
+  ],
+  starved: [
+    'Корма не хватило. Помни: 1 корм = 21 день жизни — проверяй кормушку вовремя.',
+    'Ушла тихо, пока пустовала кормушка. Пусть следующая будет сыта.',
+    'Терпение у курицы не бесконечное. Кормушка — святое.'
+  ]
+};
+let memorialTaps = 0, memorialTapTimer = null;
+
+function memorialData() {
+  const gone = chickenGone();
+  if (!gone || feeds.length === 0) return null;
+  const first = feeds[0].date;
+  const lastEnd = feeds.reduce((a, f) => f.endDate > a ? f.endDate : a, feeds[0].endDate);
+  const dEnd = new Date((gone.reason === 'retired' ? first : lastEnd) + 'T00:00:00');
+  dEnd.setDate(dEnd.getDate() + (gone.reason === 'retired' ? CHICKEN_MAX_DAYS : 1));
+  const to = localDateStr(dEnd);
+  return {
+    reason: gone.reason,
+    from: first,
+    to,
+    age: Math.max(1, daysBetween(first, to)),
+    feeds: feeds.length,
+    covered: feeds.length * FEED_DAYS
+  };
+}
+
+function memorialUpdate() {
+  const box = document.getElementById('chickenMemorial');
+  if (!box) return;
+  const data = memorialData();
+  if (!data) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  document.getElementById('memorialLine').textContent =
+    'Здесь жила курица · ' + data.age + ' дн. · ' + data.feeds + ' ' + plural(data.feeds, 'корм', 'корма', 'кормов');
+}
+
+function memorialOpen() {
+  const data = memorialData();
+  if (!data) return;
+  document.getElementById('memorialFrom').textContent = data.from;
+  document.getElementById('memorialTo').textContent = data.to;
+  document.getElementById('memorialAge').textContent = data.age;
+  document.getElementById('memorialFeeds').textContent = data.feeds;
+  document.getElementById('memorialDays').textContent = data.covered;
+  document.getElementById('memorialEpitaph').textContent = data.reason === 'retired'
+    ? 'Курица прожила свои ~140 дней и ушла к Valve на пенсию 🌤'
+    : 'Курица не дождалась корма и ушла… 🌾';
+  const qs = MEMORIAL_QUOTES[data.reason] || MEMORIAL_QUOTES.starved;
+  document.getElementById('memorialQuote').textContent = '«' + qs[Math.floor(Math.random() * qs.length)] + '»';
+  document.getElementById('memorialModal').classList.add('show');
+}
+
+function memorialClick() {
+  memorialTaps++;
+  clearTimeout(memorialTapTimer);
+  memorialTapTimer = setTimeout(() => { memorialTaps = 0; }, 2500);
+  if (memorialTaps >= 4) { // 4 быстрых тапа — как по живой курице
+    memorialTaps = 0;
+    document.getElementById('memorialModal').classList.remove('show');
+    secretMenuReveal();
+    return;
+  }
+  memorialOpen();
+}
+
+function memorialBackdropClick(ev) { if (ev.target === ev.currentTarget) ev.currentTarget.classList.remove('show'); }
 
 // ============ КАЛЬКУЛЯТОР ДОХОДА ============
 const CALC_KEY = 'income_tracker_calc_v1';
