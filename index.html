@@ -522,7 +522,52 @@
     <div class="muted" style="margin-top:6px">Лайфхак: цена цели в часах работы — умножь часы на свою ставку. Если жалко часов — не жалко и денег потратить.</div>
   </div>
 
-</div><!-- /page-piggy -->
+
+
+<!-- 🗂 СЕКРЕТНАЯ ПАПКА (файлы) — вход по ключу шифрования -->
+  <div class="card" style="border:1px dashed var(--input-border)">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <h3 style="margin:0">🗂 Секретная папка</h3>
+      <button class="ghost mini-btn" onclick="fvToggle()" title="Открыть Секретную папку">🔐</button>
+    </div>
+    <div id="fvGate" style="display:none;margin-top:8px">
+      <div class="muted" style="margin-bottom:6px">Чтобы попасть в Секретную папку, введи ключ шифрования. Забыл его? Жми «🗝 Показать ключ» ниже — секретное меню откроется внизу вкладки «Накрутка» (пока курица жива, меню открывается и 4 тапами по ней).</div>
+      <input type="password" id="fvKeyInput" placeholder="Ключ шифрования" style="width:100%;margin-bottom:8px" autocomplete="off">
+      <button onclick="fvUnlock()">🔓 Открыть папку</button>
+      <div class="row" style="margin-top:8px"><button class="ghost" onclick="secretMenuReveal()">🗝 Показать ключ</button><span class="muted" style="font-size:12px;align-self:center">забыл ключ — покажу</span></div>
+    </div>
+    <div id="fvPanel" style="display:none;margin-top:8px">
+      <div class="muted" style="margin-bottom:8px">Здесь лежат <b>любые файлы</b>: txt, word, фото, видео и т.д. Каждый файл шифруется твоим ключом перед загрузкой — на GitHub он попадает уже зашифрованным. Один файл — до 90 МБ (жёсткий лимит GitHub — 100 МБ на файл, больше он не хранит вообще, так что видео на сотни МБ сначала сожми).</div>
+      <div id="fvSetup" style="display:none">
+        <div class="muted" style="margin-bottom:6px">Файлы будут загружаться в <b>закрытый</b> репозиторий GitHub. Заведи для них новый (как Kopilka-backup, только Private): в токене должно быть право доступа и к этому репозиторию — «Contents: Read and write».</div>
+        <input type="text" id="fvUser" placeholder="Логин GitHub (напр. Kira0784)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="fvRepo" placeholder="Имя закрытого репозитория (напр. Kopilka-files)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="fvBranch" placeholder="Ветка (обычно main)" style="width:100%;margin-bottom:6px">
+        <input type="text" id="fvDir" placeholder="Папка в репозитории (напр. secret-files)" style="width:100%;margin-bottom:6px">
+        <input type="password" id="fvToken" placeholder="Токен (github_pat_… или ghp_…)" style="width:100%;margin-bottom:8px">
+        <div class="row">
+          <button onclick="fvSaveSetup()">💾 Сохранить и проверить</button>
+          <button class="ghost" onclick="fvCloseSetup()">Отмена</button>
+        </div>
+        <div class="muted" id="fvSetupMsg" style="margin-top:6px"></div>
+      </div>
+      <div id="fvMain" style="display:none">
+        <div class="muted fv-status" style="margin:0 0 6px"></div>
+        <input type="file" id="fvFileInput" multiple style="display:none" onchange="fvUpload(event)">
+        <div class="row" style="margin-bottom:6px">
+          <button onclick="document.getElementById('fvFileInput').click()">➕ Добавить файлы</button>
+        </div>
+        <div class="row">
+          <button class="ghost" onclick="fvRefresh()">🔄 Обновить</button>
+          <button class="ghost" onclick="fvOpenSetup()">⚙️ Настройки</button>
+          <button class="ghost" onclick="fvDisconnect()">✖ Отключить</button>
+        </div>
+        <div class="muted" id="fvProgress" style="margin:6px 0"></div>
+        <div id="fvList" style="margin-top:4px"></div>
+      </div>
+    </div>
+  </div>
+  </div><!-- /page-piggy -->
 
 <!-- ============ ЛИСТ 2: КОРМ ============ -->
 <div class="page" id="page-chicken">
@@ -566,48 +611,7 @@
     <div class="stat"><span>Максимум жизни курицы:</span><b>~140 дн. (20 нед.)</b></div>
   </div>
 
-  <!-- 🗂 СЕКРЕТНАЯ ПАПКА (файлы) — вход по ключу шифрования -->
-  <div class="card" style="border:1px dashed var(--input-border)">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-      <h3 style="margin:0">🗂 Секретная папка</h3>
-      <button class="ghost mini-btn" onclick="fvToggle()" title="Открыть Секретную папку">🔐</button>
-    </div>
-    <div id="fvGate" style="display:none;margin-top:8px">
-      <div class="muted" style="margin-bottom:6px">Чтобы попасть в Секретную папку, введи ключ шифрования. Он показывается в секретном меню: тапни по курице 🐔 4 раза — меню появится внизу вкладки «Накрутка».</div>
-      <input type="password" id="fvKeyInput" placeholder="Ключ шифрования" style="width:100%;margin-bottom:8px" autocomplete="off">
-      <button onclick="fvUnlock()">🔓 Открыть папку</button>
-    </div>
-    <div id="fvPanel" style="display:none;margin-top:8px">
-      <div class="muted" style="margin-bottom:8px">Здесь лежат <b>любые файлы</b>: txt, word, фото, видео и т.д. Каждый файл шифруется твоим ключом перед загрузкой — на GitHub он попадает уже зашифрованным. Один файл — до 90 МБ (жёсткий лимит GitHub — 100 МБ на файл, больше он не хранит вообще, так что видео на сотни МБ сначала сожми).</div>
-      <div id="fvSetup" style="display:none">
-        <div class="muted" style="margin-bottom:6px">Файлы будут загружаться в <b>закрытый</b> репозиторий GitHub. Заведи для них новый (как Kopilka-backup, только Private): в токене должно быть право доступа и к этому репозиторию — «Contents: Read and write».</div>
-        <input type="text" id="fvUser" placeholder="Логин GitHub (напр. Kira0784)" style="width:100%;margin-bottom:6px">
-        <input type="text" id="fvRepo" placeholder="Имя закрытого репозитория (напр. Kopilka-files)" style="width:100%;margin-bottom:6px">
-        <input type="text" id="fvBranch" placeholder="Ветка (обычно main)" style="width:100%;margin-bottom:6px">
-        <input type="text" id="fvDir" placeholder="Папка в репозитории (напр. secret-files)" style="width:100%;margin-bottom:6px">
-        <input type="password" id="fvToken" placeholder="Токен (github_pat_… или ghp_…)" style="width:100%;margin-bottom:8px">
-        <div class="row">
-          <button onclick="fvSaveSetup()">💾 Сохранить и проверить</button>
-          <button class="ghost" onclick="fvCloseSetup()">Отмена</button>
-        </div>
-        <div class="muted" id="fvSetupMsg" style="margin-top:6px"></div>
-      </div>
-      <div id="fvMain" style="display:none">
-        <div class="muted fv-status" style="margin:0 0 6px"></div>
-        <input type="file" id="fvFileInput" multiple style="display:none" onchange="fvUpload(event)">
-        <div class="row" style="margin-bottom:6px">
-          <button onclick="document.getElementById('fvFileInput').click()">➕ Добавить файлы</button>
-        </div>
-        <div class="row">
-          <button class="ghost" onclick="fvRefresh()">🔄 Обновить</button>
-          <button class="ghost" onclick="fvOpenSetup()">⚙️ Настройки</button>
-          <button class="ghost" onclick="fvDisconnect()">✖ Отключить</button>
-        </div>
-        <div class="muted" id="fvProgress" style="margin:6px 0"></div>
-        <div id="fvList" style="margin-top:4px"></div>
-      </div>
-    </div>
-  </div>
+  
 
 </div><!-- /page-chicken -->
 
@@ -648,7 +652,7 @@
   <!-- 🗝 Секретное меню — открывается 4 тапами по курице -->
   <div class="card" id="secretMenuCard" style="display:none">
     <h3>🗝 Секретное меню</h3>
-    <div class="muted" style="margin-bottom:8px">Это ключ шифрования для <b>Секретной папки</b> (вкладка «Корм» — кнопка 🔐). Введи его там, чтобы открыть папку. <b>Запиши ключ в надёжное место</b> — без него зашифрованные файлы не прочитать!</div>
+    <div class="muted" style="margin-bottom:8px">Это ключ шифрования для <b>Секретной папки</b> (вкладка «Копилка» — кнопка 🔐). Введи его там, чтобы открыть папку. <b>Запиши ключ в надёжное место</b> — без него зашифрованные файлы не прочитать!</div>
     <div id="secretKeyBox" style="font-family:monospace;font-size:16px;font-weight:700;letter-spacing:1px;text-align:center;padding:10px;background:var(--table-head);border-radius:8px;margin-bottom:8px;word-break:break-all">••••-••••-••••-••••-••••</div>
     <div class="row">
       <button class="secondary" id="secretKeyToggleBtn" onclick="secretKeyToggle()">👁 Показать</button>
@@ -657,7 +661,7 @@
     <div class="row" style="margin-top:6px">
       <button class="ghost" onclick="secretKeyCustom()">✏️ Ввести свой ключ</button>
     </div>
-    <div class="muted" style="margin-top:8px">Это меню открывается 4 тапами по курице 🐔 во вкладке «Корм».</div>
+    <div class="muted" style="margin-top:8px">Это меню открывается 4 тапами по курице 🐔 (вкладка «Корм») или кнопкой «🗝 Показать ключ» в Секретной папке (вкладка «Копилка»).</div>
   </div>
 
 </div><!-- /page-hours -->
@@ -749,6 +753,7 @@ function showToast(msg) {
 
 // ============ ВКЛАДКИ ============
 function switchTab(name) {
+  if (name === 'chicken' && chickenGone()) name = 'piggy'; // курицы нет — вкладки нет
   if (!document.getElementById('page-' + name)) name = 'income'; // старая сохранённая вкладка (drops/server)
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1244,6 +1249,40 @@ function renderChicken() {
   } else {
     document.getElementById('chickenAge').textContent = '0';
   }
+  applyChickenLife();
+}
+
+// ============ ЖИЗНЬ КУРИЦЫ: смерть и уход ============
+const CHICKEN_MAX_DAYS = 140; // максимум жизни с первого корма (~20 недель)
+const CHICKEN_GONE_KEY = 'income_tracker_chicken_gone_v1';
+
+function chickenGone() {
+  if (feeds.length === 0) return null; // курицу ещё не заводили — вкладка нужна
+  const today = todayStr();
+  const age = Math.max(0, daysBetween(feeds[0].date, today));
+  if (age >= CHICKEN_MAX_DAYS) return { reason: 'retired', age };              // ушла на пенсию к Valve
+  if (!feeds.some(f => f.endDate >= today)) return { reason: 'starved', age }; // корм кончился — умерла
+  return null;
+}
+
+function applyChickenLife() {
+  const gone = chickenGone();
+  const tabBtn = document.querySelector('.tab[data-page="chicken"]');
+  if (gone) {
+    if (tabBtn) tabBtn.style.display = 'none';
+    const pg = document.getElementById('page-chicken');
+    if (pg && pg.classList.contains('active')) switchTab('piggy');
+    if (localStorage.getItem(CHICKEN_GONE_KEY) !== gone.reason) {
+      localStorage.setItem(CHICKEN_GONE_KEY, gone.reason);
+      showToast(gone.reason === 'retired'
+        ? '🐔 Курица прожила свои ~140 дней и ушла к Valve на пенсию 🌤 Вкладка «Корм» закрыта'
+        : '🐔 Курица не дождалась корма и ушла… Вкладка «Корм» закрыта');
+    }
+  } else {
+    if (tabBtn) tabBtn.style.display = '';
+    localStorage.removeItem(CHICKEN_GONE_KEY);
+  }
+  return gone;
 }
 
 // ============ КАЛЬКУЛЯТОР ДОХОДА ============
