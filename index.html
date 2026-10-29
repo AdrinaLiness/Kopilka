@@ -398,8 +398,10 @@
   <div class="card">
     <h3>💾 Резервные копии</h3>
     <button class="secondary" onclick="vaultBtn()">🔐 Зашифрованная резервная копия</button>
+    <button class="secondary" onclick="transferExport()">📲 Перенос в приложение (Android)</button>
     <button class="danger" onclick="resetAll()">Удалить все данные</button>
     <div class="muted" style="margin-top:8px">Данные хранятся в браузере. Делай копии только через 🔐 зашифрованное хранилище — они защищены кодом, и их не прочитать без него.</div>
+    <div class="muted" style="margin-top:4px">📲 Файл переноса — для Android-приложения Копилки: войдут ВСЕ данные, включая подключение к GitHub и ключ Секретной папки. Не передавай файл никому.</div>
   </div>
 
   <div class="card" id="vaultCard" style="display:none">
@@ -2733,6 +2735,40 @@ function vaultRemove() {
 }
 
 // ============ ОБЛАКО GITHUB (закрытый репозиторий) ============
+/* ============ 📲 Перенос в Android-приложение ============ */
+function transferCollect() {
+  const keys = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (/^(income_tracker_|kopilka_)/.test(k)) keys[k] = localStorage.getItem(k);
+  }
+  return keys;
+}
+function transferExport() {
+  const keys = transferCollect();
+  const n = Object.keys(keys).length;
+  if (!n) { alert('Нет данных для переноса — сначала заведи записи в Копилке.'); return; }
+  const ghOk = !!keys['income_tracker_gh_v1'];
+  const extras = [ghOk ? 'подключение к GitHub' : '',
+                  keys['income_tracker_vault_v1'] ? 'шифрованные копии' : '',
+                  keys['kopilka_filekey_v1'] ? 'ключ Секретной папки' : '',
+                  keys['income_tracker_fv_v1'] ? 'хранилище файлов' : ''].filter(Boolean).join(', ');
+  if (!confirm('В файл переноса войдут ВСЕ данные Копилки (' + n + ' блоков' + (extras ? ': ' + extras : '') + ').'
+      + (ghOk ? '\n⚠️ Файл содержит токен GitHub — не передавай его никому.' : '')
+      + '\nСкачать?')) return;
+  const payload = { v: 1, app: 'kopilka-transfer', ts: new Date().toISOString(), count: n, keys: keys };
+  const bl = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const url = URL.createObjectURL(bl);
+  const a = document.createElement('a');
+  const d = new Date();
+  const pad = x => String(x).padStart(2, '0');
+  a.href = url;
+  a.download = 'kopilka-transfer_' + localDateStr(d) + '_' + pad(d.getHours()) + pad(d.getMinutes()) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📲 Файл скачан (' + n + ' блоков). Открой приложение Копилка → выбери файл.');
+}
+
 const GH_KEY = 'income_tracker_gh_v1';
 let ghLoadedOnce = false;
 let ghBusy = false;
