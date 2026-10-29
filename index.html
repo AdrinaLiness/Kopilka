@@ -398,10 +398,8 @@
   <div class="card">
     <h3>💾 Резервные копии</h3>
     <button class="secondary" onclick="vaultBtn()">🔐 Зашифрованная резервная копия</button>
-    <button class="secondary" onclick="transferExport()">📲 Перенос в приложение (Android)</button>
     <button class="danger" onclick="resetAll()">Удалить все данные</button>
     <div class="muted" style="margin-top:8px">Данные хранятся в браузере. Делай копии только через 🔐 зашифрованное хранилище — они защищены кодом, и их не прочитать без него.</div>
-    <div class="muted" style="margin-top:4px">📲 Файл переноса — для Android-приложения Копилки: войдут ВСЕ данные, включая подключение к GitHub и ключ Секретной папки. Не передавай файл никому.</div>
   </div>
 
   <div class="card" id="vaultCard" style="display:none">
@@ -2735,7 +2733,8 @@ function vaultRemove() {
 }
 
 // ============ ОБЛАКО GITHUB (закрытый репозиторий) ============
-/* ============ 📲 Перенос в Android-приложение ============ */
+/* ============ 📲 Файл переноса: скачивается через экран #transfer,
+   который открывает само Android-приложение (кнопка — только в нём) ==== */
 function transferCollect() {
   const keys = {};
   for (let i = 0; i < localStorage.length; i++) {
@@ -2744,7 +2743,7 @@ function transferCollect() {
   }
   return keys;
 }
-function transferExport() {
+function transferExport(silent) {
   const keys = transferCollect();
   const n = Object.keys(keys).length;
   if (!n) { alert('Нет данных для переноса — сначала заведи записи в Копилке.'); return; }
@@ -2753,7 +2752,7 @@ function transferExport() {
                   keys['income_tracker_vault_v1'] ? 'шифрованные копии' : '',
                   keys['kopilka_filekey_v1'] ? 'ключ Секретной папки' : '',
                   keys['income_tracker_fv_v1'] ? 'хранилище файлов' : ''].filter(Boolean).join(', ');
-  if (!confirm('В файл переноса войдут ВСЕ данные Копилки (' + n + ' блоков' + (extras ? ': ' + extras : '') + ').'
+  if (!silent && !confirm('В файл переноса войдут ВСЕ данные Копилки (' + n + ' блоков' + (extras ? ': ' + extras : '') + ').'
       + (ghOk ? '\n⚠️ Файл содержит токен GitHub — не передавай его никому.' : '')
       + '\nСкачать?')) return;
   const payload = { v: 1, app: 'kopilka-transfer', ts: new Date().toISOString(), count: n, keys: keys };
@@ -3358,6 +3357,51 @@ renderPiggy();
 renderChicken();
 renderHours();
 calcInit();
+</script>
+
+<!-- ============ 📲 Экран переноса (открывает Android-приложение: #transfer-export) ============ -->
+<div id="transferOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:rgba(23,14,28,.94);padding:20px;overflow:auto">
+  <div class="card" style="max-width:430px;margin:36px auto">
+    <h3>📲 Перенос данных в приложение</h3>
+    <div class="muted" style="margin-bottom:10px">Ты пришёл сюда из Android-приложения Копилка. Скачай файл переноса — в него войдут ВСЕ данные: записи, цели, события, Секретная папка и подключение к GitHub. <b>Не передавай файл никому</b> — в нём токен GitHub.</div>
+    <button onclick="transferOverlayGo()">📥 Скачать файл переноса</button>
+    <div class="muted" id="transferOverlayMsg" style="margin-top:8px">Потом вернись в приложение Копилка и нажми «📂 Выбрать файл».</div>
+    <button class="ghost" style="margin-top:8px" onclick="transferOverlayClose()">Закрыть</button>
+  </div>
+</div>
+<script>
+/* [KOPILKA v1.2] экран переноса: кнопка живёт в Android-приложении,
+   веб-версия только отдаёт файл по его запросу (#transfer-export) */
+function transferOverlayOpen() {
+  const o = document.getElementById('transferOverlay');
+  if (o) o.style.display = 'block';
+}
+function transferOverlayClose() {
+  const o = document.getElementById('transferOverlay');
+  if (o) o.style.display = 'none';
+  if (/^#transfer/.test(location.hash)) {
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (err) {}
+  }
+}
+function transferOverlayGo() {
+  const keys = transferCollect();
+  if (!Object.keys(keys).length) {
+    alert('Нет данных для переноса — сначала заведи записи в Копилке.');
+    return;
+  }
+  transferExport(true);
+  const m = document.getElementById('transferOverlayMsg');
+  if (m) m.innerHTML = '✅ Файл скачан. Вернись в приложение Копилка и нажми «📂 Выбрать файл».';
+}
+(function transferHashWatch() {
+  const check = function () { if (/^#transfer/.test(location.hash)) transferOverlayOpen(); };
+  window.addEventListener('hashchange', check);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(check, 250); });
+  } else {
+    setTimeout(check, 250);
+  }
+})();
 </script>
 </body>
 </html>
