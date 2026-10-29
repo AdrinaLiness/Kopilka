@@ -2,12 +2,15 @@ package com.adrina.kopilka;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Base64;
 import android.view.KeyEvent;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -16,7 +19,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -29,17 +32,36 @@ import java.io.OutputStream;
  *  - downloadFile(name, base64, mime) — сохранение бэкапов/файлов Секретной
  *    папки через системный диалог «Сохранить как» (SAF, без разрешений);
  *  - выбор файлов (<input type=file>) — onShowFileChooser.
+ *
+ * НОВОЕ в v1.1 — перенос данных из браузера:
+ *  - при ПЕРВОМ запуске и после КАЖДОГО ОБНОВЛЕНИЯ приложение спрашивает
+ *    «Загрузить данные из браузера?»;
+ *  - кнопка «📂 Выбрать файл» — системный выбор файла, содержимое уходит
+ *    в window.KOPILKA_ANDROID_ACCEPT(base64) внутри WebView: шим
+ *    распаковывает kopilka-transfer.json и записывает ВСЕ ключи в
+ *    localStorage (записи, цели, события, Секретная папка и подключение
+ *    к GitHub), затем перезагружает интерфейс;
+ *  - кнопка «🌐 Открыть веб-версию» — сразу открывает браузер с Копилкой;
+ *  - «Не сейчас» — больше не спрашиваем до следующего обновления.
  */
 public class MainActivity extends Activity {
 
     private static final String START_URL = "file:///android_asset/index.html";
     private static final int REQ_SAVE_FILE = 8001;
     private static final int REQ_FILE_CHOOSER = 8002;
+    private static final int REQ_IMPORT_FILE = 8003;
+
+    private static final String PREFS = "kopilka_prefs";
+    private static final String KEY_LAST_PROMPT = "last_prompt_version";
+    private static final String WEB_URL = "https://adrinaliness.github.io/Kopilka/";
 
     private WebView web;
     private byte[] pendingSave;
     private String pendingSaveMime = "application/octet-stream";
-    private android.webkit.ValueCallback<Uri[]> fileCallback;
+    private ValueCallback<Uri[]> fileCallback;
+
+    private String appVersion = "1.1";
+    private boolean promptQueued;   // показать диалог, как только будет момент
 
     @SuppressLint({"SetJavaScriptEnabled"})
     @Override
@@ -62,11 +84,142 @@ public class MainActivity extends Activity {
         web.setWebViewClient(new KopilkaClient());
         web.setWebChromeClient(new KopilkaChrome());
 
+        try {
+            appVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Exception ignored) { }
+        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        String stored = prefs.getString(KEY_LAST_PROMPT, null);
+        boolean firstLaunch = stored == null;
+        boolean afterUpdate = stored != null && !stored.equals(appVersion);
+        promptQueued = firstLaunch || afterUpdate;
+
         if (savedInstanceState != null) {
             web.restoreState(savedInstanceState);
+            queuePrompt();          /* страница уже есть — спросим чуть позже */
         } else {
-            web.loadUrl(START_URL);
+            web.loadUrl(START_URL); /* спросим в onPageFinished */
         }
+    }
+
+    /* ==================== ПЕРЕНОС ДАННЫХ ИЗ БРАУЗЕРА ==================== */
+
+    private Runnable promptRunnable = new Runnable() {
+        @Override
+        public void run() { maybeShowPrompt(); }
+    };
+
+    /** Запланировать показ диалога (чуть позже — чтобы активити было видно). */
+    private void queuePrompt() {
+        promptQueued = true;
+        if (web != null) web.postDelayed(promptRunnable, 700);
+    }
+
+    private void maybeShowPrompt() {
+        if (!promptQueued || isFinishing() || web == null) return;
+        promptQueued = false;
+        showPromptDialog();
+    }
+
+    private void showPromptDialog() {
+        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        boolean update = prefs.getString(KEY_LAST_PROMPT, null) != null;
+        String title = update
+                ? "Копилка обновилась — загрузить данные?"
+                : "Загрузить данные из браузера?";
+        String msg = (update
+                ? "Версия " + appVersion + ". "
+                  + "Можно подтянуть свежие данные из веб-версии в браузере.\n\n"
+                : "Привет! Это первый запуск Копилки 🐷\n"
+                  + "Можно перенести ВСЕ данные из веб-версии в браузере: записи, цели, "
+                  + "события, Секретную папку и подключение к GitHub.\n\n")
+                + "Как перенести:\n"
+                + "1. Открой Копилку в браузере телефона\n"
+                + "2. Вкладка «💰 Доход» → «💾 Резервные копии» → "
+                  + "«📲 Перенос в приложение»\n"
+                + "3. Вернись сюда и выбери скачанный файл";
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(msg)
+                .setCancelable(false)
+                .setPositiveButton("📂 Выбрать файл", new android.content.DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(android.content.DialogInterface d, int w) { openImportPicker(); }
+                })
+                .setNeutralButton("🌐 Открыть веб-версию", new android.content.DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(android.content.DialogInterface d, int w) {
+                        promptQueued = true;   /* вернёмся — снова спросим */
+                        try {
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(WEB_URL)));
+                        } catch (Exception e) {
+                            toast("Браузер не найден: " + e.getMessage());
+                        }
+                    }
+                })
+                .setNegativeButton("Не сейчас", new android.content.DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(android.content.DialogInterface d, int w) { markPromptDone(); }
+                })
+                .show();
+    }
+
+    private void openImportPicker() {
+        try {
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("*/*");
+            startActivityForResult(i, REQ_IMPORT_FILE);
+        } catch (Exception e) {
+            toast("Не смог открыть выбор файла: " + e.getMessage());
+        }
+    }
+
+    /** Отдать выбранный файл в WebView — шим запишет всё в localStorage. */
+    private void deliverImport(Uri uri) {
+        try {
+            InputStream is = getContentResolver().openInputStream(uri);
+            if (is == null) throw new Exception("файл недоступен");
+            ByteArrayOutputStream bo = new ByteArrayOutputStream();
+            byte[] buf = new byte[8192];
+            int r;
+            while ((r = is.read(buf)) > 0) bo.write(buf, 0, r);
+            is.close();
+            final String b64 = Base64.encodeToString(bo.toByteArray(), Base64.NO_WRAP);
+            final String js = "(window.KOPILKA_ANDROID_ACCEPT ? KOPILKA_ANDROID_ACCEPT('"
+                    + b64 + "') : 'missing')";
+            web.evaluateJavascript(js, new ValueCallback<String>() {
+                @Override
+                public void onReceiveValue(String value) {
+                    if (value != null && value.contains("ok")) {
+                        markPromptDone();
+                        Toast.makeText(MainActivity.this,
+                                "🐷 Данные из браузера перенесены", Toast.LENGTH_LONG).show();
+                    } else if (value != null && value.contains("missing")) {
+                        markPromptDone();
+                        Toast.makeText(MainActivity.this,
+                                "Ассеты устарели — установи APK заново", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(MainActivity.this,
+                                "Не вышло — можно попробовать ещё раз", Toast.LENGTH_SHORT).show();
+                        queuePrompt();
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Toast.makeText(this, "Ошибка чтения файла: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            promptQueued = true;
+        }
+    }
+
+    /** «Не сейчас» / успешный импорт — не спрашиваем до следующего обновления. */
+    private void markPromptDone() {
+        promptQueued = false;
+        getSharedPreferences(PREFS, MODE_PRIVATE)
+                .edit().putString(KEY_LAST_PROMPT, appVersion).apply();
+    }
+
+    private void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     /* ==================== JS-МОСТ ==================== */
@@ -130,6 +283,14 @@ public class MainActivity extends Activity {
             }
             return;
         }
+        if (requestCode == REQ_IMPORT_FILE) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                deliverImport(data.getData());
+            } else {
+                promptQueued = true;   /* отменил выбор — спросим снова в onResume */
+            }
+            return;
+        }
         if (requestCode == REQ_FILE_CHOOSER) {
             Uri[] result = null;
             if (resultCode == RESULT_OK && data != null) {
@@ -184,13 +345,18 @@ public class MainActivity extends Activity {
             }
             return null;
         }
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            maybeShowPrompt();   /* страница готова — пора спрашивать */
+        }
     }
 
     /** <input type="file"> — выбор файлов (бэкап, файлы Секретной папки). */
     private class KopilkaChrome extends WebChromeClient {
         @Override
         public boolean onShowFileChooser(WebView view,
-                                         android.webkit.ValueCallback<Uri[]> callback,
+                                         ValueCallback<Uri[]> callback,
                                          WebChromeClient.FileChooserParams params) {
             if (fileCallback != null) fileCallback.onReceiveValue(null);
             fileCallback = callback;
@@ -252,11 +418,13 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (web != null) web.onResume();
+        if (promptQueued) web.postDelayed(promptRunnable, 700);
     }
 
     @Override
     protected void onDestroy() {
         if (web != null) {
+            web.removeCallbacks(promptRunnable);
             web.destroy();
             web = null;
         }
