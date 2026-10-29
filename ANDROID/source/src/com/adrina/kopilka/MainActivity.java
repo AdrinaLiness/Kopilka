@@ -3,15 +3,9 @@ package com.adrina.kopilka;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.NotificationManager;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Base64;
 import android.view.KeyEvent;
@@ -28,8 +22,6 @@ import android.widget.Toast;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import org.json.JSONArray;
 
 /**
  * Копилка для Android — WebView-обёртка над kopilka index.html.
@@ -57,16 +49,6 @@ import org.json.JSONArray;
  *    мост Android.transferPrompt()) открывает веб-версию с меткой
  *    #transfer-export — там сразу появляется экран «📥 Скачать файл
  *    переноса», т.е. весь перенос запускается из самого приложения.
- *
- * НОВОЕ в v1.3 — чтение смсок в фоне:
- *  - SmsReceiver (в манифесте) ловит каждую новую смску даже при закрытом
- *    приложении: очередь в SharedPreferences + уведомление + «пинок»
- *    broadcast'ом ACTION_SMS_ARRIVED;
- *  - MainActivity забирает очередь (живой приёмник в onResume / после
- *    загрузки страницы) и отдаёт в WebView — window.KOPILKA_ANDROID_SMS
- *    ведёт журнал «💬 Смски» и авто-добавляет поступления в доход;
- *  - разрешения RECEIVE_SMS/READ_SMS (+POST_NOTIFICATIONS на Android 13+)
- *    запрашиваются по кнопке «✅ Разрешить чтение смсок» через мост.
  */
 public class MainActivity extends Activity {
 
@@ -74,7 +56,6 @@ public class MainActivity extends Activity {
     private static final int REQ_SAVE_FILE = 8001;
     private static final int REQ_FILE_CHOOSER = 8002;
     private static final int REQ_IMPORT_FILE = 8003;
-    private static final int REQ_SMS_PERM = 9001;
 
     private static final String PREFS = "kopilka_prefs";
     private static final String KEY_LAST_PROMPT = "last_prompt_version";
@@ -85,10 +66,8 @@ public class MainActivity extends Activity {
     private String pendingSaveMime = "application/octet-stream";
     private ValueCallback<Uri[]> fileCallback;
 
-    private String appVersion = "1.3";
+    private String appVersion = "1.2";
     private boolean promptQueued;   // показать диалог, как только будет момент
-    private boolean pageReady;      // страница загружена — шимы доступны
-    private BroadcastReceiver smsPing;
 
     @SuppressLint({"SetJavaScriptEnabled"})
     @Override
@@ -110,9 +89,6 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new Bridge(), "Android");
         web.setWebViewClient(new KopilkaClient());
         web.setWebChromeClient(new KopilkaChrome());
-
-        pageReady = false;
-        smsPing = new SmsPingReceiver();
 
         try {
             appVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -174,9 +150,7 @@ public class MainActivity extends Activity {
                   + "в браузере\n"
                 + "2. Тапни там «📥 Скачать файл переноса»\n"
                 + "3. Вернись сюда → «📂 Выбрать файл» → укажи скачанный "
-                  + "файл kopilka-transfer_….json"
-                + (update ? "\n\n💬 Новое в v1.3: смски читаются в фоне — "
-                           + "включи их кнопкой «Разрешить» в блоке «💬 Смски»." : "");
+                  + "файл kopilka-transfer_….json";
         new AlertDialog.Builder(this)
                 .setTitle(title)
                 .setMessage(msg)
@@ -261,75 +235,6 @@ public class MainActivity extends Activity {
                 .edit().putString(KEY_LAST_PROMPT, appVersion).apply();
     }
 
-    /* ==================== СМС В ФОНЕ (v1.3) ==================== */
-
-    /**
-     * Забрать очередь смсок (их сложил SmsReceiver, когда приложение было
-     * закрыто) и отдать в WebView одним пакетом: журнал, разбор сумм,
-     * авто-доход — всё внутри шима KOPILKA_ANDROID_SMS.
-     */
-    private void flushSmsQueue() {
-        if (web == null || !pageReady || isFinishing()) return;
-        JSONArray arr = SmsReceiver.readQueue(this);
-        if (arr.length() == 0) return;
-        try {
-            final String q = arr.toString();
-            final int[] ids = new int[arr.length()];
-            for (int i = 0; i < arr.length(); i++) ids[i] = arr.getJSONObject(i).optInt("id", -1);
-            final String b64 = Base64.encodeToString(q.getBytes("UTF-8"), Base64.NO_WRAP);
-            final String js = "(window.KOPILKA_ANDROID_SMS ? KOPILKA_ANDROID_SMS('"
-                    + b64 + "') : 'missing')";
-            web.evaluateJavascript(js, new ValueCallback<String>() {
-                @Override
-                public void onReceiveValue(String value) {
-                    if (value != null && value.contains("ok")) {
-                        /* из очереди — только доставленные (новые могли прийти пока думали) */
-                        SmsReceiver.removeFromQueue(MainActivity.this, ids);
-                        NotificationManager nm =
-                                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                        if (nm != null) for (int id : ids) nm.cancel(id);
-                    } else if (value != null && value.contains("missing")) {
-                        toast("Смски примутся после перезапуска приложения");
-                    }
-                }
-            });
-        } catch (Exception e) {
-            toast("Ошибка очереди смсок: " + e.getMessage());
-        }
-    }
-
-    /** Живые смски: SmsReceiver «будит» нас, пока приложение на экране. */
-    private class SmsPingReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent != null && SmsReceiver.ACTION_SMS_ARRIVED.equals(intent.getAction())) {
-                if (web != null) web.postDelayed(new Runnable() {
-                    @Override public void run() { flushSmsQueue(); }
-                }, 350);
-            }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (requestCode == REQ_SMS_PERM) {
-            boolean granted = false;
-            for (int i = 0; i < permissions.length; i++) {
-                if (android.Manifest.permission.RECEIVE_SMS.equals(permissions[i])
-                        && grantResults[i] == PackageManager.PERMISSION_GRANTED) granted = true;
-            }
-            toast(granted
-                    ? "✅ Готово — читаю смски в фоне"
-                    : "❌ Без разрешения смски читать не смогу");
-            if (web != null && pageReady) {
-                web.evaluateJavascript(
-                        "(window.KOPILKA_SMS_REFRESH ? KOPILKA_SMS_REFRESH() : 0)", null);
-            }
-            return;
-        }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
     private void toast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
@@ -380,38 +285,6 @@ public class MainActivity extends Activity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() { showPromptDialog(true); }
-            });
-        }
-
-        /** Состояние разрешения на смски: granted / denied (v1.3). */
-        @JavascriptInterface
-        public String smsPermissionState() {
-            try {
-                int r = checkSelfPermission(android.Manifest.permission.RECEIVE_SMS);
-                return r == PackageManager.PERMISSION_GRANTED ? "granted" : "denied";
-            } catch (Exception e) {
-                return "denied";
-            }
-        }
-
-        /** Кнопка «✅ Разрешить чтение смсок» (v1.3). */
-        @JavascriptInterface
-        public void requestSmsPermission() {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        java.util.ArrayList<String> perms = new java.util.ArrayList<>();
-                        perms.add(android.Manifest.permission.RECEIVE_SMS);
-                        perms.add(android.Manifest.permission.READ_SMS);
-                        if (Build.VERSION.SDK_INT >= 33) {
-                            perms.add(android.Manifest.permission.POST_NOTIFICATIONS);
-                        }
-                        requestPermissions(perms.toArray(new String[0]), REQ_SMS_PERM);
-                    } catch (Exception e) {
-                        toast("Не смог запросить разрешение: " + e.getMessage());
-                    }
-                }
             });
         }
     }
@@ -469,12 +342,6 @@ public class MainActivity extends Activity {
     /** file:// — внутри приложения; ссылки и mailto/tel — наружу. */
     private class KopilkaClient extends WebViewClient {
         @Override
-        public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
-            super.onPageStarted(view, url, favicon);
-            pageReady = false;
-        }
-
-        @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             Uri u = request.getUrl();
             String scheme = u.getScheme() == null ? "" : u.getScheme();
@@ -507,11 +374,7 @@ public class MainActivity extends Activity {
 
         @Override
         public void onPageFinished(WebView view, String url) {
-            pageReady = true;
             maybeShowPrompt();   /* страница готова — пора спрашивать */
-            web.postDelayed(new Runnable() {
-                @Override public void run() { flushSmsQueue(); }
-            }, 600);              /* смски из очереди — после загрузки шимов */
         }
     }
 
@@ -575,21 +438,13 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         if (web != null) web.onPause();
-        try { unregisterReceiver(smsPing); } catch (Exception ignored) { }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (web != null) web.onResume();
-        try { registerReceiver(smsPing, new IntentFilter(SmsReceiver.ACTION_SMS_ARRIVED)); }
-        catch (Exception ignored) { }
-        if (promptQueued && web != null) web.postDelayed(promptRunnable, 700);
-        if (pageReady && web != null) {
-            web.postDelayed(new Runnable() {
-                @Override public void run() { flushSmsQueue(); }
-            }, 400);
-        }
+        if (promptQueued) web.postDelayed(promptRunnable, 700);
     }
 
     @Override
