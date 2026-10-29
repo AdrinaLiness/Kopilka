@@ -1,11 +1,12 @@
 #!/bin/bash
-# Сборка KOPILKA APK (без Gradle — aapt2 + d8 + apksigner)
+# Сборка KOPILKA APK (без Gradle — aapt2 + d8 + apksigner). v1.1
 set -e
 SDK=/home/z/my-project/android-sdk
 PROJ=/home/z/my-project/kopilka_android
 BT=$SDK/android-14
 PLAT=$SDK/android-34/android.jar
-JAVA=$SDK/jdk-17.0.21+9/bin
+JDK_DIR=$(ls -d "$SDK"/jdk-* 2>/dev/null | head -1)
+JAVA="$JDK_DIR/bin"
 OUT=$PROJ/out
 export PATH="$JAVA:$PATH"
 
@@ -31,7 +32,7 @@ echo "[3/6] aapt2 compile + link..."
   --manifest "$PROJ/AndroidManifest.xml" \
   -A "$PROJ/assets" \
   --min-sdk-version 24 --target-sdk-version 34 \
-  --version-code 1 --version-name 1.0 \
+  --version-code 2 --version-name 1.1 \
   --auto-add-overlay \
   "$OUT/res.zip"
 
@@ -49,8 +50,8 @@ if [ ! -f "$KS" ]; then
     -dname "CN=Kopilka, OU=AdrinaLiness, O=AdrinaLiness, C=RU" >/dev/null 2>&1
 fi
 "$BT/apksigner" sign --ks "$KS" --ks-pass pass:kopilka2026 \
-  --out "$PROJ/KOPILKA-v1.0.apk" "$OUT/kopilka-aligned.apk"
-"$BT/apksigner" verify "$PROJ/KOPILKA-v1.0.apk" && echo "APK OK"
+  --out "$PROJ/KOPILKA-v1.1.apk" "$OUT/kopilka-aligned.apk"
+"$BT/apksigner" verify "$PROJ/KOPILKA-v1.1.apk" && echo "APK OK"
 
-ls -la "$PROJ/KOPILKA-v1.0.apk"
-"$BT/aapt2" dump badging "$PROJ/KOPILKA-v1.0.apk" | head -8
+ls -la "$PROJ/KOPILKA-v1.1.apk"
+"$BT/aapt2" dump badging "$PROJ/KOPILKA-v1.1.apk" | head -8
