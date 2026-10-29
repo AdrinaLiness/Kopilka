@@ -41,8 +41,14 @@ import java.io.OutputStream;
  *    распаковывает kopilka-transfer.json и записывает ВСЕ ключи в
  *    localStorage (записи, цели, события, Секретная папка и подключение
  *    к GitHub), затем перезагружает интерфейс;
- *  - кнопка «🌐 Открыть веб-версию» — сразу открывает браузер с Копилкой;
  *  - «Не сейчас» — больше не спрашиваем до следующего обновления.
+ *
+ * НОВОЕ в v1.2 — кнопка переноса живёт ТОЛЬКО в приложении:
+ *  - в браузерной версии кнопки «Перенос в приложение» больше нет;
+ *  - «📲 Перенос из браузера» (в диалоге и в «Резервных копиях» через
+ *    мост Android.transferPrompt()) открывает веб-версию с меткой
+ *    #transfer-export — там сразу появляется экран «📥 Скачать файл
+ *    переноса», т.е. весь перенос запускается из самого приложения.
  */
 public class MainActivity extends Activity {
 
@@ -60,7 +66,7 @@ public class MainActivity extends Activity {
     private String pendingSaveMime = "application/octet-stream";
     private ValueCallback<Uri[]> fileCallback;
 
-    private String appVersion = "1.1";
+    private String appVersion = "1.2";
     private boolean promptQueued;   // показать диалог, как только будет момент
 
     @SuppressLint({"SetJavaScriptEnabled"})
@@ -120,45 +126,56 @@ public class MainActivity extends Activity {
         showPromptDialog();
     }
 
-    private void showPromptDialog() {
+    private void showPromptDialog() { showPromptDialog(false); }
+
+    /**
+     * Диалог переноса. manual=false — автозапуск (первый запуск/обновление),
+     * manual=true — вызов кнопкой «📲 Перенос из браузера» из интерфейса.
+     */
+    private void showPromptDialog(final boolean manual) {
         SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
-        boolean update = prefs.getString(KEY_LAST_PROMPT, null) != null;
-        String title = update
-                ? "Копилка обновилась — загрузить данные?"
-                : "Загрузить данные из браузера?";
+        boolean update = !manual && prefs.getString(KEY_LAST_PROMPT, null) != null;
+        String title = manual
+                ? "Перенос данных из браузера"
+                : (update
+                    ? "Копилка обновилась — загрузить данные?"
+                    : "Загрузить данные из браузера?");
         String msg = (update
                 ? "Версия " + appVersion + ". "
-                  + "Можно подтянуть свежие данные из веб-версии в браузере.\n\n"
-                : "Привет! Это первый запуск Копилки 🐷\n"
-                  + "Можно перенести ВСЕ данные из веб-версии в браузере: записи, цели, "
-                  + "события, Секретную папку и подключение к GitHub.\n\n")
+                  + "Можно подтянуть свежие данные из веб-версии.\n\n"
+                : "Переедет ВСЁ из веб-версии: записи, цели, события, "
+                  + "Секретная папка и подключение к GitHub.\n\n")
                 + "Как перенести:\n"
-                + "1. Открой Копилку в браузере телефона\n"
-                + "2. Вкладка «💰 Доход» → «💾 Резервные копии» → "
-                  + "«📲 Перенос в приложение»\n"
-                + "3. Вернись сюда и выбери скачанный файл";
+                + "1. Нажми «📲 Перенос из браузера» — откроется Копилка "
+                  + "в браузере\n"
+                + "2. Тапни там «📥 Скачать файл переноса»\n"
+                + "3. Вернись сюда → «📂 Выбрать файл» → укажи скачанный "
+                  + "файл kopilka-transfer_….json";
         new AlertDialog.Builder(this)
                 .setTitle(title)
                 .setMessage(msg)
-                .setCancelable(false)
+                .setCancelable(manual)
                 .setPositiveButton("📂 Выбрать файл", new android.content.DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(android.content.DialogInterface d, int w) { openImportPicker(); }
                 })
-                .setNeutralButton("🌐 Открыть веб-версию", new android.content.DialogInterface.OnClickListener() {
+                .setNeutralButton("📲 Перенос из браузера", new android.content.DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(android.content.DialogInterface d, int w) {
                         promptQueued = true;   /* вернёмся — снова спросим */
                         try {
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(WEB_URL)));
+                            startActivity(new Intent(Intent.ACTION_VIEW,
+                                    Uri.parse(WEB_URL + "#transfer-export")));
                         } catch (Exception e) {
                             toast("Браузер не найден: " + e.getMessage());
                         }
                     }
                 })
-                .setNegativeButton("Не сейчас", new android.content.DialogInterface.OnClickListener() {
+                .setNegativeButton(manual ? "Закрыть" : "Не сейчас", new android.content.DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(android.content.DialogInterface d, int w) { markPromptDone(); }
+                    public void onClick(android.content.DialogInterface d, int w) {
+                        if (!manual) markPromptDone();
+                    }
                 })
                 .show();
     }
@@ -259,6 +276,15 @@ public class MainActivity extends Activity {
                 public void run() {
                     Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
                 }
+            });
+        }
+
+        /** Кнопка «📲 Перенос из браузера» внутри интерфейса (v1.2). */
+        @JavascriptInterface
+        public void transferPrompt() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() { showPromptDialog(true); }
             });
         }
     }
