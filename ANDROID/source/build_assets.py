@@ -5,6 +5,11 @@
 v1.1: + шим KOPILKA_ANDROID_ACCEPT — приём файла переноса
 (kopilka-transfer.json) из нативного диалога: все ключи localStorage
 восстанавливаются целиком, включая подключение к GitHub и Секретную папку.
+
+v1.2: + кнопка «📲 Перенос из браузера» ТОЛЬКО в приложении (в блоке
+«Резервные копии»): через мост Android.transferPrompt() открывает нативный
+диалог переноса; в браузерной версии такой кнопки больше нет — она там
+не нужна (перенос запускается из самого приложения).
 """
 import io
 import json
@@ -143,8 +148,19 @@ console.log('%c[KOPILKA ANDROID] transfer-import готов','color:#2ecc71;font
 </script>"""
 close_body = html.rindex("</body>")
 html = html[:close_body] + accept_shim + "\n" + html[close_body:]
+
+# 2d) НОВОЕ v1.2: кнопка «📲 Перенос из браузера» — ТОЛЬКО внутри
+#     приложения (в браузерной сборке её нет). Открывает нативный диалог
+#     переноса: он сам откроет веб-версию с #transfer-export (экран
+#     «📥 Скачать файл переноса»), а дальше — «📂 Выбрать файл».
+transfer_btn = ('<button class="secondary" '
+                'onclick="try{Android.transferPrompt()}catch(e){showToast(\'Обнови приложение (APK v1.2+)\')}">'
+                '📲 Перенос из браузера</button>\n    ')
+marker_btn = '<button class="danger" onclick="resetAll()">Удалить все данные</button>'
+assert marker_btn in html, "маркер кнопки «Удалить все данные» не найден"
+html = html.replace(marker_btn, transfer_btn + marker_btn, 1)
 io.open(f"{BASE}/assets/index.html", "w", encoding="utf-8").write(html)
-print("index.html:", len(html), "bytes (Chart.js локализован + download-shim + transfer-import)")
+print("index.html:", len(html), "bytes (Chart.js локализован + download-shim + transfer-import + кнопка переноса)")
 
 # 3) sw.js — кладём для полноты (на file:// регистрация безопасно пропускается)
 shutil.copy(f"{SITE}/sw.js", f"{BASE}/assets/sw.js")
