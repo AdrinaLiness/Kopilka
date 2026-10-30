@@ -731,29 +731,23 @@ let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{"goal":100000,
 let feeds = JSON.parse(localStorage.getItem(FEED_KEY) || '[]');      // [{id, date, endDate}]
 // 🐔 Одноразовая подгонка под реального CS2-питомца «Королева Инферно» (данные egg checker):
 // Hatched 05.10.2026 · Food Expiration 18.11.2026 12:03 UTC (CS2-корм, как и здесь, живёт 21 день).
-// v2: в сохранении ровно 1 корм (хозяин брал корм 1 раз — задвоение убираем),
-// дата — с вылупления (чтобы возраст совпадал с CS2), конец — как в CS2.
-// Когда возьмётся 2-й корм, endDate подгоним повторно (флаг v3).
+// v3: реальная история хозяина — при вылуплении в кормушке уже был стартовый корм,
+// позже (28.10) выдан свой корм на 21 день, он действует до 18.11.2026. Итого 2 записи:
+// 05.10 → 28.10 (стартовый) и 28.10 → 18.11 (21 день). Возраст считается от вылупления.
 const CS2_HATCH = '2026-10-05';
+const CS2_SELF_FED = '2026-10-28';  // день, когда хозяин выдал свой корм (18.11 − 21 день)
 const CS2_FEED_END = '2026-11-18';
 function syncCs2Feed() {
-  const FLAG = 'income_tracker_feed_cs2_sync_v2';
+  const FLAG = 'income_tracker_feed_cs2_sync_v3';
   try {
     if (localStorage.getItem(FLAG)) return;
-    localStorage.setItem(FLAG, '2');
-    if (feeds.length > 1) {
-      // задвоение в сохранении: оставляем только самую свежую запись
-      feeds.sort((a, b) => ((a.date || '') + (a.endDate || '')).localeCompare((b.date || '') + (b.endDate || '')));
-      feeds = [feeds[feeds.length - 1]];
-    }
-    if (feeds.length === 0) {
-      feeds = [{ id: Date.now(), date: CS2_HATCH, endDate: CS2_FEED_END }];
-    } else {
-      feeds[0].date = CS2_HATCH;       // возраст — ровно с вылупления (05.10.2026)
-      feeds[0].endDate = CS2_FEED_END; // сыт до 18.11.2026 — как в CS2
-    }
+    localStorage.setItem(FLAG, '3');
+    feeds = [
+      { id: Date.now() - 1, date: CS2_HATCH, endDate: CS2_SELF_FED },  // стартовый корм из кормушки
+      { id: Date.now(), date: CS2_SELF_FED, endDate: CS2_FEED_END }    // свой корм: 21 день
+    ];
     saveFeeds();
-    showToast('🐔 Корм подогнан под CS2: 1 корм, сыт до 18.11.2026');
+    showToast('🐔 Корм подогнан под CS2: стартовый + 21 день, сыт до 18.11.2026');
   } catch (e) { /* тихо — не мешаем приложению */ }
 }
 syncCs2Feed();
