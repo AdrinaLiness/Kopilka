@@ -729,25 +729,25 @@ const ACTIVE_TAB_KEY = 'income_tracker_tab';
 let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{"goal":100000,"deadline":"2027-03-07","weeklyPlan":3500}');
 let feeds = JSON.parse(localStorage.getItem(FEED_KEY) || '[]');      // [{id, date, endDate}]
-// 🐔 Одноразовая подгонка под реального CS2-питомца «Королева Инферно» (данные egg checker):
-// v5 — полная история по рассказу хозяина, второго корма НЕ было:
-//   1) при получении яйца (05.10.2026) в кормушке был стартовый корм — хватало до 09.10;
-//   2) 09.10.2026 хозяин взял пачку корма — по консоли CS2 корм хватает до 18.11.2026.
-// Конец корма = 18.11 (как пишет консоль), поэтому длительность пачки = 09.10 → 18.11.
+// 🐔 Одноразовая подгонка под реального CS2-питомца «Королева Инферно» — финал (v6):
+//   1) стартовый корм из набора яйца: 05.10.2026 → 28.10.2026 (18.11 минус ~3 недели);
+//   2) пачка корма, взятая хозяином 09.10.2026: действует до 18.11.2026 (как пишет консоль).
+// Пачка начала расходоваться, когда кончился стартовый корм (28.10), — выдачи 28.10 НЕ было.
 const CS2_HATCH = '2026-10-05';
-const CS2_PACK_FED = '2026-10-09';  // день, когда хозяин взял пачку корма
-const CS2_FEED_END = '2026-11-18';  // Food Expiration по консоли
+const CS2_STARTER_END = '2026-10-28';  // стартовый корм кончился (18.11 − 3 недели)
+const CS2_PACK_FED = '2026-10-09';     // день, когда хозяин взял пачку корма
+const CS2_FEED_END = '2026-11-18';     // Food Expiration по консоли
 function syncCs2Feed() {
-  const FLAG = 'income_tracker_feed_cs2_sync_v5';
+  const FLAG = 'income_tracker_feed_cs2_sync_v6';
   try {
     if (localStorage.getItem(FLAG)) return;
-    localStorage.setItem(FLAG, '5');
+    localStorage.setItem(FLAG, '6');
     feeds = [
-      { id: Date.now() - 1, date: CS2_HATCH, endDate: CS2_PACK_FED },  // стартовый корм из набора яйца
-      { id: Date.now(), date: CS2_PACK_FED, endDate: CS2_FEED_END }    // пачка от 09.10 — до 18.11
+      { id: Date.now() - 1, date: CS2_HATCH, endDate: CS2_STARTER_END }, // стартовый корм из яйца
+      { id: Date.now(), date: CS2_PACK_FED, endDate: CS2_FEED_END }      // пачка от 09.10 → до 18.11
     ];
     saveFeeds();
-    showToast('🐔 Корм подогнан: стартовый до 09.10 + пачка до 18.11.2026');
+    showToast('🐔 Корм подогнан: стартовый до 28.10, пачка (от 09.10) до 18.11.2026');
   } catch (e) { /* тихо — не мешаем приложению */ }
 }
 syncCs2Feed();
