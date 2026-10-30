@@ -730,24 +730,24 @@ let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{"goal":100000,"deadline":"2027-03-07","weeklyPlan":3500}');
 let feeds = JSON.parse(localStorage.getItem(FEED_KEY) || '[]');      // [{id, date, endDate}]
 // 🐔 Одноразовая подгонка под реального CS2-питомца «Королева Инферно» (данные egg checker):
-// Hatched 05.10.2026 · Food Expiration 18.11.2026 12:03 UTC (CS2-корм, как и здесь, живёт 21 день).
-// v3: реальная история хозяина — при вылуплении в кормушке уже был стартовый корм,
-// позже (28.10) выдан свой корм на 21 день, он действует до 18.11.2026. Итого 2 записи:
-// 05.10 → 28.10 (стартовый) и 28.10 → 18.11 (21 день). Возраст считается от вылупления.
+// v5 — полная история по рассказу хозяина, второго корма НЕ было:
+//   1) при получении яйца (05.10.2026) в кормушке был стартовый корм — хватало до 09.10;
+//   2) 09.10.2026 хозяин взял пачку корма — по консоли CS2 корм хватает до 18.11.2026.
+// Конец корма = 18.11 (как пишет консоль), поэтому длительность пачки = 09.10 → 18.11.
 const CS2_HATCH = '2026-10-05';
-const CS2_SELF_FED = '2026-10-28';  // день, когда хозяин выдал свой корм (18.11 − 21 день)
-const CS2_FEED_END = '2026-11-18';
+const CS2_PACK_FED = '2026-10-09';  // день, когда хозяин взял пачку корма
+const CS2_FEED_END = '2026-11-18';  // Food Expiration по консоли
 function syncCs2Feed() {
-  const FLAG = 'income_tracker_feed_cs2_sync_v3';
+  const FLAG = 'income_tracker_feed_cs2_sync_v5';
   try {
     if (localStorage.getItem(FLAG)) return;
-    localStorage.setItem(FLAG, '3');
+    localStorage.setItem(FLAG, '5');
     feeds = [
-      { id: Date.now() - 1, date: CS2_HATCH, endDate: CS2_SELF_FED },  // стартовый корм из кормушки
-      { id: Date.now(), date: CS2_SELF_FED, endDate: CS2_FEED_END }    // свой корм: 21 день
+      { id: Date.now() - 1, date: CS2_HATCH, endDate: CS2_PACK_FED },  // стартовый корм из набора яйца
+      { id: Date.now(), date: CS2_PACK_FED, endDate: CS2_FEED_END }    // пачка от 09.10 — до 18.11
     ];
     saveFeeds();
-    showToast('🐔 Корм подогнан под CS2: стартовый + 21 день, сыт до 18.11.2026');
+    showToast('🐔 Корм подогнан: стартовый до 09.10 + пачка до 18.11.2026');
   } catch (e) { /* тихо — не мешаем приложению */ }
 }
 syncCs2Feed();
