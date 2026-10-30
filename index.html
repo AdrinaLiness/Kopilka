@@ -729,33 +729,34 @@ const ACTIVE_TAB_KEY = 'income_tracker_tab';
 let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{"goal":100000,"deadline":"2027-03-07","weeklyPlan":3500}');
 let feeds = JSON.parse(localStorage.getItem(FEED_KEY) || '[]');      // [{id, date, endDate}]
-// 🐔 Одноразовая подгонка под реального CS2-питомца «Королева Инферно»:
-// Hatched 05.10.2026 · последний корм 28.10.2026 · Food Expiration 18.11.2026 12:03 UTC
-// (CS2-корм, как и здесь, живёт 21 день).
+// 🐔 Одноразовая подгонка под реального CS2-питомца «Королева Инферно» (данные egg checker):
+// Hatched 05.10.2026 · Food Expiration 18.11.2026 12:03 UTC (CS2-корм, как и здесь, живёт 21 день).
+// v2: в сохранении ровно 1 корм (хозяин брал корм 1 раз — задвоение убираем),
+// дата — с вылупления (чтобы возраст совпадал с CS2), конец — как в CS2.
+// Когда возьмётся 2-й корм, endDate подгоним повторно (флаг v3).
 const CS2_HATCH = '2026-10-05';
-const CS2_LAST_FED = '2026-10-28';
 const CS2_FEED_END = '2026-11-18';
-(function syncCs2Feed() {
-  const FLAG = 'income_tracker_feed_cs2_sync_v1';
+function syncCs2Feed() {
+  const FLAG = 'income_tracker_feed_cs2_sync_v2';
   try {
     if (localStorage.getItem(FLAG)) return;
-    if (feeds.length > 0 && feeds[0].date !== CS2_HATCH) {
-      feeds[0].date = CS2_HATCH; // возраст — ровно с вылупления
-      if (feeds[0].endDate < CS2_HATCH) feeds[0].endDate = CS2_HATCH;
+    localStorage.setItem(FLAG, '2');
+    if (feeds.length > 1) {
+      // задвоение в сохранении: оставляем только самую свежую запись
+      feeds.sort((a, b) => ((a.date || '') + (a.endDate || '')).localeCompare((b.date || '') + (b.endDate || '')));
+      feeds = [feeds[feeds.length - 1]];
     }
-    const today = todayStr();
-    const actives = feeds.filter(f => f.endDate >= today);
-    if (actives.length > 0) {
-      actives.reduce((a, b) => b.endDate > a.endDate ? b : a).endDate = CS2_FEED_END;
-      actives.forEach(f => { if (f.endDate > CS2_FEED_END) f.endDate = CS2_FEED_END; });
+    if (feeds.length === 0) {
+      feeds = [{ id: Date.now(), date: CS2_HATCH, endDate: CS2_FEED_END }];
     } else {
-      feeds.push({ id: Date.now(), date: CS2_LAST_FED, endDate: CS2_FEED_END });
+      feeds[0].date = CS2_HATCH;       // возраст — ровно с вылупления (05.10.2026)
+      feeds[0].endDate = CS2_FEED_END; // сыт до 18.11.2026 — как в CS2
     }
     saveFeeds();
-    localStorage.setItem(FLAG, '1');
-    showToast('🐔 Корм подогнан под CS2: действует до 18.11.2026');
+    showToast('🐔 Корм подогнан под CS2: 1 корм, сыт до 18.11.2026');
   } catch (e) { /* тихо — не мешаем приложению */ }
-})();
+}
+syncCs2Feed();
 let drops = JSON.parse(localStorage.getItem(DROPS_KEY) || '[]');     // [{id, date, name, price, source}]
 let games = JSON.parse(localStorage.getItem(GAMES_KEY) || '[]');      // [{id, name, real, target, grinded}]
 let wishes = JSON.parse(localStorage.getItem(WISHES_KEY) || '[]');    // [{id, emoji, name, price, saved, bought, boughtDate, createdAt}]
