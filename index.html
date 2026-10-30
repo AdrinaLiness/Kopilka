@@ -47,6 +47,7 @@
   .quick-btns button { flex: 0 0 auto; font-size: 13px; padding: 6px 10px; background: #95a5a6; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .row > * { flex: 1; min-width: 100px; }
+  #feedHistoryTable input[type="date"] { padding: 4px 6px; margin: 0; font-size: 14px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { padding: 6px 4px; text-align: left; border-bottom: 1px solid var(--border); }
   th { background: var(--table-head); font-weight: 600; }
@@ -595,15 +596,17 @@
     <h3>🍗 Выдать корм</h3>
     <div class="row">
       <input type="date" id="feedDate">
+      <input type="number" id="feedDays" min="1" max="365" value="21"
+             style="flex:0 0 92px" title="На сколько дней хватит корма">
       <button onclick="giveFeed()">Выдал корм сегодня</button>
     </div>
-    <div class="muted">Один корм = 3 недели (21 день) жизни курицы.</div>
+    <div class="muted">По умолчанию один корм = 21 день. Поставь своё число дней — а дату «действует до» всегда можно подправить прямо в истории.</div>
   </div>
 
   <div class="card">
     <h3>📋 История корма</h3>
     <table id="feedHistoryTable">
-      <thead><tr><th>Дата</th><th>Действует до</th><th>Дней</th><th></th></tr></thead>
+      <thead><tr><th>Дата</th><th title="Тапни по дате, чтобы подправить">Действует до ✏️</th><th>Дней</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -726,6 +729,33 @@ const ACTIVE_TAB_KEY = 'income_tracker_tab';
 let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{"goal":100000,"deadline":"2027-03-07","weeklyPlan":3500}');
 let feeds = JSON.parse(localStorage.getItem(FEED_KEY) || '[]');      // [{id, date, endDate}]
+// 🐔 Одноразовая подгонка под реального CS2-питомца «Королева Инферно»:
+// Hatched 05.10.2026 · последний корм 28.10.2026 · Food Expiration 18.11.2026 12:03 UTC
+// (CS2-корм, как и здесь, живёт 21 день).
+const CS2_HATCH = '2026-10-05';
+const CS2_LAST_FED = '2026-10-28';
+const CS2_FEED_END = '2026-11-18';
+(function syncCs2Feed() {
+  const FLAG = 'income_tracker_feed_cs2_sync_v1';
+  try {
+    if (localStorage.getItem(FLAG)) return;
+    if (feeds.length > 0 && feeds[0].date !== CS2_HATCH) {
+      feeds[0].date = CS2_HATCH; // возраст — ровно с вылупления
+      if (feeds[0].endDate < CS2_HATCH) feeds[0].endDate = CS2_HATCH;
+    }
+    const today = todayStr();
+    const actives = feeds.filter(f => f.endDate >= today);
+    if (actives.length > 0) {
+      actives.reduce((a, b) => b.endDate > a.endDate ? b : a).endDate = CS2_FEED_END;
+      actives.forEach(f => { if (f.endDate > CS2_FEED_END) f.endDate = CS2_FEED_END; });
+    } else {
+      feeds.push({ id: Date.now(), date: CS2_LAST_FED, endDate: CS2_FEED_END });
+    }
+    saveFeeds();
+    localStorage.setItem(FLAG, '1');
+    showToast('🐔 Корм подогнан под CS2: действует до 18.11.2026');
+  } catch (e) { /* тихо — не мешаем приложению */ }
+})();
 let drops = JSON.parse(localStorage.getItem(DROPS_KEY) || '[]');     // [{id, date, name, price, source}]
 let games = JSON.parse(localStorage.getItem(GAMES_KEY) || '[]');      // [{id, name, real, target, grinded}]
 let wishes = JSON.parse(localStorage.getItem(WISHES_KEY) || '[]');    // [{id, emoji, name, price, saved, bought, boughtDate, createdAt}]
@@ -1195,22 +1225,41 @@ function renderIncome() {
 }
 
 // ============ КОРМ ============
-const FEED_DAYS = 21; // 3 недели
+const FEED_DAYS = 21; // 3 недели — корм по умолчанию
+/** Сколько дней реально покрывает корм: от даты выдачи до даты конца. */
+function feedDur(f) {
+  return Math.max(1, daysBetween(f.date, f.endDate));
+}
 function giveFeed() {
   const date = document.getElementById('feedDate').value;
   if (!date) return alert('Укажи дату');
+  const daysEl = document.getElementById('feedDays');
+  let days = parseInt(daysEl && daysEl.value, 10);
+  if (!days || days < 1) days = FEED_DAYS;
+  if (days > 365) days = 365;
   const endDate = new Date(date + 'T00:00:00');
-  endDate.setDate(endDate.getDate() + FEED_DAYS);
+  endDate.setDate(endDate.getDate() + days);
   feeds.push({ id: Date.now(), date, endDate: localDateStr(endDate) });
   saveFeeds();
   renderChicken();
-  showToast('🍗 Корм выдан! Хватит на ' + FEED_DAYS + ' дней');
+  showToast('🍗 Корм выдан! Хватит на ' + days + ' ' + plural(days, 'день', 'дня', 'дней'));
 }
 function removeFeed(id) {
   if (!confirm('Удалить запись о корме?')) return;
   feeds = feeds.filter(f => f.id !== id);
   saveFeeds();
   renderChicken();
+}
+/** Подправить дату «действует до» у записи корма. */
+function editFeedEnd(id, value) {
+  if (!value) { renderChicken(); return; } // пустую дату игнорируем
+  const f = feeds.find(x => x.id === id);
+  if (!f) return;
+  if (value < f.date) value = f.date; // корм не кончается раньше выдачи
+  f.endDate = value;
+  saveFeeds();
+  renderChicken();
+  showToast('📅 Корм теперь действует до ' + value);
 }
 function renderChicken() {
   const today = todayStr();
@@ -1219,10 +1268,12 @@ function renderChicken() {
   const tbody = document.querySelector('#feedHistoryTable tbody');
   tbody.innerHTML = '';
   feeds.slice().reverse().forEach(f => {
-    const days = daysBetween(f.date, f.endDate);
+    const days = feedDur(f);
     const expired = f.endDate < today;
     const rowStyle = expired ? 'style="opacity:0.5"' : '';
-    tbody.innerHTML += `<tr ${rowStyle}><td>${f.date}</td><td>${f.endDate}</td><td>${days}</td>
+    tbody.innerHTML += `<tr ${rowStyle}><td>${f.date}</td>
+      <td><input type="date" value="${f.endDate}" min="${f.date}"
+        onchange="editFeedEnd(${f.id}, this.value)" title="Подправить дату"></td><td>${days}</td>
       <td><span class="del" onclick="removeFeed(${f.id})">×</span></td></tr>`;
   });
   if (feeds.length === 0) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888">Корм ещё не выдавался</td></tr>';
@@ -1235,7 +1286,7 @@ function renderChicken() {
 
   if (activeFeed) {
     const daysLeft = daysBetween(today, activeFeed.endDate);
-    const percent = Math.max(0, Math.min(100, daysLeft / FEED_DAYS * 100));
+    const percent = Math.max(0, Math.min(100, daysLeft / feedDur(activeFeed) * 100));
     document.getElementById('feedProgressFill').style.width = percent + '%';
     document.getElementById('feedProgressText').textContent = daysLeft + ' дн.';
     document.getElementById('feedGivenDate').textContent = activeFeed.date;
@@ -1263,7 +1314,7 @@ function renderChicken() {
   }
 
   document.getElementById('totalFeeds').textContent = feeds.length;
-  document.getElementById('totalFeedDays').textContent = feeds.length * FEED_DAYS;
+  document.getElementById('totalFeedDays').textContent = feeds.reduce((s, f) => s + feedDur(f), 0);
   if (feeds.length > 0) {
     const firstFeed = feeds[0].date;
     document.getElementById('chickenAge').textContent = Math.max(0, daysBetween(firstFeed, today));
@@ -1318,7 +1369,7 @@ const MEMORIAL_QUOTES = {
     'Пенсия заслужена. Half-Life 3 к её приходу так и не вышел, но она всё равно ждёт 🌤'
   ],
   starved: [
-    'Корма не хватило. Помни: 1 корм = 21 день жизни — проверяй кормушку вовремя.',
+    'Корма не хватило. Помни: у каждого корма своя дата — проверяй кормушку вовремя.',
     'Ушла тихо, пока пустовала кормушка. Пусть следующая будет сыта.',
     'Терпение у курицы не бесконечное. Кормушка — святое.'
   ]
@@ -1339,7 +1390,7 @@ function memorialData() {
     to,
     age: Math.max(1, daysBetween(first, to)),
     feeds: feeds.length,
-    covered: feeds.length * FEED_DAYS
+    covered: feeds.reduce((s, f) => s + feedDur(f), 0)
   };
 }
 
