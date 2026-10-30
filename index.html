@@ -600,13 +600,13 @@
              style="flex:0 0 92px" title="На сколько дней хватит корма">
       <button onclick="giveFeed()">Выдал корм сегодня</button>
     </div>
-    <div class="muted">По умолчанию один корм = 21 день. Поставь своё число дней — а дату «действует до» всегда можно подправить прямо в истории.</div>
+    <div class="muted">По умолчанию один корм = 21 день. Дату «действует до» вручную менять нельзя: после каждого нового корма скажи, до какого числа он хватит, — и точная дата будет подогнана обновлением.</div>
   </div>
 
   <div class="card">
     <h3>📋 История корма</h3>
     <table id="feedHistoryTable">
-      <thead><tr><th>Дата</th><th title="Тапни по дате, чтобы подправить">Действует до ✏️</th><th>Дней</th><th></th></tr></thead>
+      <thead><tr><th>Дата</th><th>Действует до</th><th>Дней</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -614,6 +614,7 @@
   <div class="card">
     <h3>📊 Статистика</h3>
     <div class="stat"><span>Всего выдано корма:</span><b><span id="totalFeeds">0</span></b></div>
+    <div class="muted" id="starterFeedsNote" style="display:none;margin:-4px 0 4px">🥚 <span id="starterFeedsCount">0</span> — начальный из набора яйца, не выдавался (в счёт не идёт)</div>
     <div class="stat"><span>Всего дней покрыто:</span><b><span id="totalFeedDays">0</span></b></div>
     <div class="stat"><span>Курица прожила (с первого корма):</span><b><span id="chickenAge">0</span> дн.</b></div>
     <div class="stat"><span>Максимум жизни курицы:</span><b>~140 дн. (20 нед.)</b></div>
@@ -729,25 +730,28 @@ const ACTIVE_TAB_KEY = 'income_tracker_tab';
 let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{"goal":100000,"deadline":"2027-03-07","weeklyPlan":3500}');
 let feeds = JSON.parse(localStorage.getItem(FEED_KEY) || '[]');      // [{id, date, endDate}]
-// 🐔 Одноразовая подгонка под реального CS2-питомца «Королева Инферно» — финал (v6):
+// 🐔 Одноразовая подгонка под реального CS2-питомца «Королева Инферно» — финал (v7):
 //   1) стартовый корм из набора яйца: 05.10.2026 → 28.10.2026 (18.11 минус ~3 недели);
 //   2) пачка корма, взятая хозяином 09.10.2026: действует до 18.11.2026 (как пишет консоль).
 // Пачка начала расходоваться, когда кончился стартовый корм (28.10), — выдачи 28.10 НЕ было.
+// v7: стартовый корм помечен starter:true — он из набора яйца, хозяин его НЕ выдавал,
+//     поэтому в «Всего выдано корма» не считается. Даты вручную больше не редактируются:
+//     после каждого нового корма хозяин пишет, до какого числа хватает, — правка вносится обновлением.
 const CS2_HATCH = '2026-10-05';
 const CS2_STARTER_END = '2026-10-28';  // стартовый корм кончился (18.11 − 3 недели)
 const CS2_PACK_FED = '2026-10-09';     // день, когда хозяин взял пачку корма
 const CS2_FEED_END = '2026-11-18';     // Food Expiration по консоли
 function syncCs2Feed() {
-  const FLAG = 'income_tracker_feed_cs2_sync_v6';
+  const FLAG = 'income_tracker_feed_cs2_sync_v7';
   try {
     if (localStorage.getItem(FLAG)) return;
-    localStorage.setItem(FLAG, '6');
+    localStorage.setItem(FLAG, '7');
     feeds = [
-      { id: Date.now() - 1, date: CS2_HATCH, endDate: CS2_STARTER_END }, // стартовый корм из яйца
-      { id: Date.now(), date: CS2_PACK_FED, endDate: CS2_FEED_END }      // пачка от 09.10 → до 18.11
+      { id: Date.now() - 1, date: CS2_HATCH, endDate: CS2_STARTER_END, starter: true }, // стартовый корм из яйца (не выдавался хозяином)
+      { id: Date.now(), date: CS2_PACK_FED, endDate: CS2_FEED_END }                     // пачка от 09.10 → до 18.11
     ];
     saveFeeds();
-    showToast('🐔 Корм подогнан: стартовый до 28.10, пачка (от 09.10) до 18.11.2026');
+    showToast('🐔 Корм подогнан: 🥚 начальный до 28.10 + пачка (от 09.10) до 18.11.2026');
   } catch (e) { /* тихо — не мешаем приложению */ }
 }
 syncCs2Feed();
@@ -1245,17 +1249,7 @@ function removeFeed(id) {
   saveFeeds();
   renderChicken();
 }
-/** Подправить дату «действует до» у записи корма. */
-function editFeedEnd(id, value) {
-  if (!value) { renderChicken(); return; } // пустую дату игнорируем
-  const f = feeds.find(x => x.id === id);
-  if (!f) return;
-  if (value < f.date) value = f.date; // корм не кончается раньше выдачи
-  f.endDate = value;
-  saveFeeds();
-  renderChicken();
-  showToast('📅 Корм теперь действует до ' + value);
-}
+// Даты «действует до» вручную не редактируются — подгоняются только обновлениями приложения.
 function renderChicken() {
   const today = todayStr();
   feeds.sort((a,b) => a.date.localeCompare(b.date));
@@ -1266,10 +1260,13 @@ function renderChicken() {
     const days = feedDur(f);
     const expired = f.endDate < today;
     const rowStyle = expired ? 'style="opacity:0.5"' : '';
-    tbody.innerHTML += `<tr ${rowStyle}><td>${f.date}</td>
-      <td><input type="date" value="${f.endDate}" min="${f.date}"
-        onchange="editFeedEnd(${f.id}, this.value)" title="Подправить дату"></td><td>${days}</td>
-      <td><span class="del" onclick="removeFeed(${f.id})">×</span></td></tr>`;
+    const endCell = f.starter
+      ? `<td><span style="white-space:nowrap">🥚 ${f.endDate} <span style="color:#e67e22;font-weight:700">начальный</span></span></td>`
+      : `<td>${f.endDate}</td>`;
+    const delCell = f.starter
+      ? '<td><span title="Начальный корм из набора яйца — не удаляется и не считается выданным">🥚</span></td>'
+      : `<td><span class="del" onclick="removeFeed(${f.id})">×</span></td>`;
+    tbody.innerHTML += `<tr ${rowStyle}><td>${f.date}</td>${endCell}<td>${days}</td>${delCell}</tr>`;
   });
   if (feeds.length === 0) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888">Корм ещё не выдавался</td></tr>';
 
@@ -1308,7 +1305,12 @@ function renderChicken() {
     emoji.textContent = '🐔';
   }
 
-  document.getElementById('totalFeeds').textContent = feeds.length;
+  // «Выдано» считаем только корма, взятые лично хозяином; начальный из яйца — не выдача
+  const starterCount = feeds.filter(f => f.starter).length;
+  document.getElementById('totalFeeds').textContent = feeds.length - starterCount;
+  const starterNote = document.getElementById('starterFeedsNote');
+  if (starterCount > 0) { starterNote.style.display = ''; document.getElementById('starterFeedsCount').textContent = starterCount; }
+  else starterNote.style.display = 'none';
   document.getElementById('totalFeedDays').textContent = feeds.reduce((s, f) => s + feedDur(f), 0);
   if (feeds.length > 0) {
     const firstFeed = feeds[0].date;
