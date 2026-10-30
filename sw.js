@@ -3,7 +3,7 @@
 // надёжные уведомления (клик по уведомлению открывает Копилку).
 // Стратегия: СЕТЬ ПЕРВА — обновления сайта всегда доходят до приложения,
 // офлайн — открываем последнюю сохранённую копию.
-const CACHE = 'kopilka-v17';
+const CACHE = 'kopilka-v18';
 const PRECACHE = [
   './index.html',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
