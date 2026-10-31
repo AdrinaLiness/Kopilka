@@ -1284,8 +1284,9 @@ function renderChicken() {
   });
   if (feeds.length === 0) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888">Корм ещё не выдавался</td></tr>';
 
-  // Активный корм — тот, у которого endDate >= today
-  const activeFeed = feeds.filter(f => f.endDate >= today).sort((a,b) => a.endDate.localeCompare(b.endDate))[0];
+  // Активный корм — самый свежий из действующих: новый корм перекрывает старый (как слот еды в CS2),
+  // поэтому из непросроченных берём тот, у которого дата окончания максимальна
+  const activeFeed = feeds.filter(f => f.endDate >= today).sort((a,b) => b.endDate.localeCompare(a.endDate))[0];
 
   const emoji = document.getElementById('chickenEmoji');
   const status = document.getElementById('feedStatus');
